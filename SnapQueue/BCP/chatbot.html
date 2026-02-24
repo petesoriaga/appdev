@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/png" href="/favicon.png?v=2">
+  <link rel="icon" href="/favicon.ico?v=2" type="image/x-icon">
+  <link rel="shortcut icon" href="/favicon.ico?v=2" type="image/x-icon">
+  <title>BCP Robot ChatBot</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* Custom scrollbar for a cleaner look */
+    #chat-messages::-webkit-scrollbar,
+    #question-list::-webkit-scrollbar {
+      width: 5px;
+    }
+    #chat-messages::-webkit-scrollbar-track,
+    #question-list::-webkit-scrollbar-track {
+      background: #f1f1f1;
+    }
+    #chat-messages::-webkit-scrollbar-thumb,
+    #question-list::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 10px;
+    }
+    
+
+    
+    .fade-in {
+      animation: fadeIn 0.3s ease-in;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+  </style>
+</head>
+<body class="bg-gray-100 font-sans">
+
+  <button id="chat-toggle"
+    class="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full bg-gradient-to-br from-slate-600 to-slate-800 text-white shadow-2xl hover:shadow-3xl transition-all hover:scale-110 flex items-center justify-center group"
+    aria-label="Open chat">
+    <svg id="chat-icon" class="w-7 h-7 transition-transform group-hover:rotate-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.1" d="M21 11.5a8.5 8.5 0 01-8.5 8.5H8l-5 3V11.5A8.5 8.5 0 0111.5 3h1A8.5 8.5 0 0121 11.5z" />
+    </svg>
+    <svg id="close-icon" class="hidden w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+    </svg>
+  </button>
+
+  <div id="chat-window" class="hidden fixed bottom-20 right-6 z-50 w-96 h-[520px] max-w-[calc(100vw-1rem)] max-h-[calc(100vh-100px)] bg-white rounded-2xl shadow-2xl border border-slate-100 flex flex-col overflow-hidden transition-all duration-300 transform scale-95 opacity-0 origin-bottom-right">
+
+    <!-- Header -->
+    <div class="shrink-0 bg-gradient-to-r from-slate-600 to-slate-700 p-3 text-white shadow-md">
+      <div class="flex items-center gap-2">
+        <div class="relative">
+          <div class="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center border border-white/30 text-sm">
+            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
+            </svg>
+          </div>
+          <span class="absolute bottom-0 right-0 w-2 h-2 bg-green-400 border-2 border-slate-600 rounded-full"></span>
+        </div>
+        <div>
+          <h3 class="font-bold text-sm leading-none">BCP Robot</h3>
+          <p class="text-[10px] opacity-80 mt-0.5">AI Assistant</p>
+        </div>
+        <button id="chat-minimize" class="ml-auto hover:bg-white/10 p-1.5 rounded-lg transition" title="Minimize">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Chat Tab Content -->
+    <div id="chat-content" class="flex flex-col flex-1 overflow-hidden fade-in">
+      <!-- Suggested Questions -->
+      <div id="suggested-section" class="shrink-0 px-3 py-2 bg-slate-50 border-b border-slate-100">
+        <p class="text-[10px] font-semibold text-slate-700 mb-1.5">💡 You can ask:</p>
+        <div id="suggested-questions" class="flex flex-wrap gap-1.5"></div>
+      </div>
+      
+      <div id="chat-messages" class="flex-1 overflow-y-auto p-3 space-y-3 bg-gray-50/50">
+        <div class="flex justify-start">
+          <div class="bg-white border border-slate-100 text-gray-700 px-3 py-2 rounded-2xl rounded-bl-none shadow-sm max-w-[85%] text-sm">
+            <p>Beep boop! 🤖 Hi! How can I help?</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="shrink-0 p-3 bg-white border-t border-slate-100">
+        <div class="flex items-center gap-2 bg-gray-100 rounded-lg px-2.5 py-1.5 focus-within:ring-2 focus-within:ring-slate-500 transition-all">
+          <input id="chat-input" type="text" placeholder="Ask something..." class="flex-1 bg-transparent border-none py-1 text-xs focus:outline-none text-gray-700 placeholder-gray-500">
+          <button id="chat-send" class="text-slate-600 hover:text-slate-700 p-0.5 transition-transform active:scale-90 flex items-center justify-center" title="Send message">
+            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+            </svg>
+          </button>
+        </div>
+        <div class="mt-2">
+          <button id="book-session-btn" class="block w-full text-center py-2 bg-slate-600 text-white text-xs font-bold rounded-lg hover:bg-slate-700 transition-all shadow-md">📸 Book Session</button>
+        </div>
+      </div>
+    </div>
+
+
+  </div>
+
+  <script>
+    // DOM Elements
+    const toggleBtn = document.getElementById("chat-toggle");
+    const chatWindow = document.getElementById("chat-window");
+    const minimizeBtn = document.getElementById("chat-minimize");
+    const chatIcon = document.getElementById("chat-icon");
+    const closeIcon = document.getElementById("close-icon");
+    const chatInput = document.getElementById("chat-input");
+    const chatSend = document.getElementById("chat-send");
+    const chatMessages = document.getElementById("chat-messages");
+    
+    // Chat Content
+    const chatContent = document.getElementById("chat-content");
+    
+
+    
+    // Suggested Questions
+    const suggestedQuestions = document.getElementById("suggested-questions");
+
+    // Storage key for questions
+    const QA_STORAGE_KEY = "bcpRobotQA";
+
+    // Default Q&A pairs
+    const defaultQA = [
+      { question: "wedding", answer: "Our wedding packages range from $1500-$3000. 💒" },
+      { question: "price", answer: "Standard portrait sessions start at $500. 💰" },
+      { question: "location", answer: "We are based in Nueva Ecija, Philippines and available for travel! 📍" },
+      { question: "hello", answer: "Hi! BCP Robot at your service! 🤖" }
+    ];
+
+    // Initialize questions from localStorage
+    function initializeQuestions() {
+      const stored = localStorage.getItem(QA_STORAGE_KEY);
+      if (!stored) {
+        localStorage.setItem(QA_STORAGE_KEY, JSON.stringify(defaultQA));
+        return defaultQA;
+      }
+      return JSON.parse(stored);
+    }
+
+    function getQuestions() {
+      return JSON.parse(localStorage.getItem(QA_STORAGE_KEY) || "[]");
+    }
+
+    function saveQuestions(questions) {
+      localStorage.setItem(QA_STORAGE_KEY, JSON.stringify(questions));
+    }
+
+    // Render Suggested Questions Buttons
+    function renderSuggestedQuestions() {
+      const questions = getQuestions();
+      suggestedQuestions.innerHTML = questions.map(qa => `
+        <button class="suggested-btn px-2.5 py-1.5 bg-white border border-slate-300 text-slate-700 text-xs rounded-full hover:bg-slate-100 transition-all whitespace-nowrap" data-question="${escapeHtml(qa.question)}">
+          ${escapeHtml(qa.question.charAt(0).toUpperCase() + qa.question.slice(1))}
+        </button>
+      `).join("");
+
+      // Add click handlers to suggested buttons
+      document.querySelectorAll(".suggested-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+          chatInput.value = btn.dataset.question;
+          chatInput.focus();
+          processMessage();
+        });
+      });
+    }
+    // Check login status
+    function isUserLoggedIn() {
+      return localStorage.getItem("userLoggedIn") === "true";
+    }
+
+    // Set login status
+    function setLoginStatus(status) {
+      if (status) {
+        localStorage.setItem("userLoggedIn", "true");
+      } else {
+        localStorage.removeItem("userLoggedIn");
+      }
+    }
+
+    // Logout function (can be called globally from other pages)
+    window.logoutUser = function() {
+      setLoginStatus(false);
+      window.location.href = "login.html";
+    };
+
+    // Initialize on load
+    initializeQuestions();
+    renderSuggestedQuestions();
+
+    // Toggle Chat Window
+    function toggleChat() {
+      const isHidden = chatWindow.classList.contains("hidden");
+      if (isHidden) {
+        chatWindow.classList.remove("hidden");
+        setTimeout(() => {
+          chatWindow.classList.remove("scale-95", "opacity-0");
+          chatWindow.classList.add("scale-100", "opacity-100");
+        }, 10);
+        chatIcon.classList.add("hidden");
+        closeIcon.classList.remove("hidden");
+        chatInput.focus();
+      } else {
+        chatWindow.classList.add("scale-95", "opacity-0");
+        chatWindow.classList.remove("scale-100", "opacity-100");
+        setTimeout(() => chatWindow.classList.add("hidden"), 300);
+        chatIcon.classList.remove("hidden");
+        closeIcon.classList.add("hidden");
+      }
+    }
+
+
+
+    // Chat Functionality
+    function addMessage(text, isUser = false) {
+      const messageDiv = document.createElement("div");
+      messageDiv.className = `flex ${isUser ? "justify-end" : "justify-start"} mb-3 animate-in fade-in slide-in-from-bottom-2 duration-300`;
+      const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      
+      messageDiv.innerHTML = `
+        <div class="${isUser ? "bg-slate-600 text-white" : "bg-white border border-slate-100 text-gray-700"} px-3 py-2 rounded-2xl ${isUser ? "rounded-br-none" : "rounded-bl-none"} shadow-sm max-w-[85%] text-sm">
+          <p class="leading-relaxed">${escapeHtml(text)}</p>
+          <p class="text-[9px] ${isUser ? "text-slate-100" : "text-gray-400"} mt-0.5 text-right">${time}</p>
+        </div>
+      `;
+      chatMessages.appendChild(messageDiv);
+      chatMessages.scrollTo({ top: chatMessages.scrollHeight, behavior: 'smooth' });
+    }
+
+    function showTyping() {
+      const typingDiv = document.createElement("div");
+      typingDiv.id = "typing-indicator";
+      typingDiv.className = "flex justify-start mb-3";
+      typingDiv.innerHTML = `<div class="bg-gray-200 px-3 py-2 rounded-2xl rounded-bl-none flex gap-1"><span class="w-1 h-1 bg-gray-500 rounded-full animate-bounce"></span><span class="w-1 h-1 bg-gray-500 rounded-full animate-bounce [animation-delay:0.2s]"></span><span class="w-1 h-1 bg-gray-500 rounded-full animate-bounce [animation-delay:0.4s]"></span></div>`;
+      chatMessages.appendChild(typingDiv);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+      return typingDiv;
+    }
+
+    function processMessage() {
+      const msg = chatInput.value.trim();
+      if (!msg) return;
+      addMessage(msg, true);
+      chatInput.value = "";
+      const indicator = showTyping();
+
+      setTimeout(() => {
+        indicator.remove();
+        const lower = msg.toLowerCase();
+        const questions = getQuestions();
+        
+        let found = "I'm still learning! Contact our human team at otpaauthetication@gmail.com. 🤖";
+        for (const qa of questions) {
+          if (lower.includes(qa.question)) {
+            found = qa.answer;
+            break;
+          }
+        }
+        addMessage(found, false);
+      }, 1000);
+    }
+
+    // Escape HTML to prevent XSS
+    function escapeHtml(text) {
+      const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+      };
+      return text.replace(/[&<>"']/g, m => map[m]);
+    }
+
+    // Handle Book Session Button
+    const bookSessionBtn = document.getElementById("book-session-btn");
+    bookSessionBtn.addEventListener("click", () => {
+      if (isUserLoggedIn()) {
+        window.location.href = "reservation.html";
+      } else {
+        window.location.href = "login.html";
+      }
+    });
+
+    // Event Listeners
+    toggleBtn.addEventListener("click", toggleChat);
+    minimizeBtn.addEventListener("click", toggleChat);
+    chatSend.addEventListener("click", processMessage);
+    chatInput.addEventListener("keypress", (e) => { if (e.key === "Enter") processMessage(); });
+  </script>
+  <script src="chat-widget.js"></script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+

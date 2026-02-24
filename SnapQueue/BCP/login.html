@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <link rel="icon" type="image/png" href="/favicon.png?v=2">
+  <link rel="icon" href="/favicon.ico?v=2" type="image/x-icon">
+  <link rel="shortcut icon" href="/favicon.ico?v=2" type="image/x-icon">
+  <title>Log-in | SnapQueue</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { overflow-x: hidden; }
+
+    /* Custom scrollbar styling - Now active on all devices for the form container */
+    .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #3b82f6; border-radius: 10px; }
+    
+    input::-ms-reveal, input::-ms-clear { display: none !important; }
+    input::-webkit-contacts-auto-fill-button,
+    input::-webkit-credentials-auto-fill-button {
+        visibility: hidden;
+        display: none !important;
+        pointer-events: none;
+    }
+  </style>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-blue-950 flex items-center justify-center font-sans md:p-4 relative overflow-hidden">
+
+  <div class="pointer-events-none fixed inset-0 overflow-hidden -z-10">
+    <div class="absolute -top-24 -right-20 w-96 h-96 rounded-full bg-blue-400/25 blur-3xl"></div>
+    <div class="absolute top-1/3 -left-20 w-80 h-80 rounded-full bg-cyan-300/20 blur-3xl"></div>
+    <div class="absolute -bottom-24 right-1/4 w-80 h-80 rounded-full bg-indigo-300/20 blur-3xl"></div>
+  </div>
+
+  <a href="/" class="hidden md:absolute md:top-6 md:left-6 md:inline-flex md:items-center md:gap-1.5 md:px-3 md:py-2 md:rounded-full md:border md:border-gray-200 md:bg-white md:text-gray-700 md:text-xs md:font-semibold md:shadow-sm md:transition-all md:hover:bg-blue-50 md:hover:text-blue-600 md:hover:border-blue-200 md:active:scale-[0.98] md:touch-manipulation">
+    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.25" d="M15 19l-7-7 7-7" />
+    </svg>
+    <span>Home</span>
+  </a>
+
+  <div class="w-full h-full md:h-[580px] md:max-w-5xl bg-white/90 backdrop-blur-xl md:rounded-[2rem] md:shadow-2xl overflow-hidden flex flex-col md:flex-row border border-white/20">
+    
+    <div class="hidden md:flex md:w-1/2 md:p-8 md:flex-col md:justify-center md:bg-gradient-to-br md:from-slate-900 md:via-slate-800 md:to-blue-900 text-white shrink-0">
+      <p class="inline-flex w-max items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[10px] font-extrabold uppercase tracking-[0.16em] text-blue-100">Account Access</p>
+      <h2 id="auth-title" class="mt-4 text-3xl font-black tracking-tight">Welcome back!</h2>
+      <p class="mt-2 text-sm text-blue-100/90 leading-relaxed">Manage bookings, payments, and updates in one secure client portal.</p>
+      <div class="mt-7 rounded-2xl border border-white/15 bg-white/10 p-4">
+        <p class="text-[11px] uppercase tracking-[0.18em] text-blue-100/80 font-bold">Connect With Us</p>
+        <div class="mt-4 space-y-3">
+          <a href="https://www.facebook.com/profile.php?id=100079708334779" target="_blank" rel="noopener noreferrer" class="group flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-3 transition-all hover:bg-white/15 hover:border-white/25">
+            <span class="grid h-9 w-9 place-items-center rounded-lg bg-blue-500/25 text-blue-100">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M13.5 21v-7h2.4l.6-3h-3V9.3c0-.9.3-1.5 1.6-1.5h1.5V5.1c-.3 0-1.2-.1-2.3-.1-2.3 0-3.8 1.4-3.8 4V11H8v3h2.5v7h3z"/>
+              </svg>
+            </span>
+            <div>
+              <p class="text-sm font-bold">Facebook</p>
+              <p class="text-xs text-blue-100/80">Follow updates and announcements</p>
+            </div>
+          </a>
+          <a href="https://www.instagram.com/petesoriaga/" target="_blank" rel="noopener noreferrer" class="group flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-3 transition-all hover:bg-white/15 hover:border-white/25">
+            <span class="grid h-9 w-9 place-items-center rounded-lg bg-pink-500/25 text-pink-100">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M7.8 2h8.4A5.8 5.8 0 0 1 22 7.8v8.4a5.8 5.8 0 0 1-5.8 5.8H7.8A5.8 5.8 0 0 1 2 16.2V7.8A5.8 5.8 0 0 1 7.8 2zm8.1 2h-7.8A4.1 4.1 0 0 0 4 8.1v7.8A4.1 4.1 0 0 0 8.1 20h7.8a4.1 4.1 0 0 0 4.1-4.1V8.1A4.1 4.1 0 0 0 15.9 4zM12 7a5 5 0 1 1 0 10 5 5 0 0 1 0-10zm0 1.8a3.2 3.2 0 1 0 0 6.4 3.2 3.2 0 0 0 0-6.4zm5.3-2.2a1.2 1.2 0 1 1 0 2.4 1.2 1.2 0 0 1 0-2.4z"/>
+              </svg>
+            </span>
+            <div>
+              <p class="text-sm font-bold">Instagram</p>
+              <p class="text-xs text-blue-100/80">See latest shoots and reels</p>
+            </div>
+          </a>
+          <a href="mailto:otpaauthetication@gmail.com" class="group flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-3 transition-all hover:bg-white/15 hover:border-white/25">
+            <span class="grid h-9 w-9 place-items-center rounded-lg bg-cyan-500/25 text-cyan-100">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M3 5h18a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1zm9 7L4.2 7h15.6L12 12zm-8 5h16V9.2l-7.4 4.8a1 1 0 0 1-1.2 0L4 9.2V17z"/>
+              </svg>
+            </span>
+            <div>
+              <p class="text-sm font-bold">Email</p>
+              <p class="text-xs text-blue-100/80">Send concerns directly to support</p>
+            </div>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div class="w-full md:w-1/2 bg-white/90 p-6 md:p-7 flex flex-col h-full overflow-hidden">
+      <div class="flex items-center gap-2 mb-4 md:hidden shrink-0">
+        <h2 class="text-blue-600 font-bold text-xl tracking-tighter">SnapQueue</h2>
+        <a href="/" class="ml-auto inline-flex items-center gap-1.5 px-3 py-2 rounded-full border border-gray-200 bg-white text-gray-700 text-xs font-semibold shadow-sm transition-all hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 active:scale-[0.98] touch-manipulation">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.25" d="M15 19l-7-7 7-7" />
+          </svg>
+          <span>Home</span>
+        </a>
+      </div>
+
+      <div class="mb-4 md:hidden text-center shrink-0">
+        <h1 id="mobile-auth-title" class="text-2xl font-extrabold text-gray-900 mb-2">Welcome back!</h1>
+        <p class="text-sm text-gray-500">Sign in to manage bookings and payments</p>
+      </div>
+
+      <div class="flex bg-gray-200 rounded-xl p-1 mb-4 shrink-0 gap-2">
+        <button id="signInTab" class="flex-1 py-2 rounded-lg font-bold text-xs transition-all bg-white text-blue-600 shadow-sm">SIGN IN</button>
+        <button id="signUpTab" class="flex-1 py-2 rounded-lg font-bold text-xs transition-all text-gray-500">SIGN UP</button>
+      </div>
+
+      <div class="flex-1 overflow-y-auto custom-scrollbar pr-2">
+        
+        <form id="signInForm" class="space-y-3" novalidate>
+          <div class="space-y-1">
+            <label for="signin-email" class="text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-1">Email</label>
+            <input id="signin-email" type="email" placeholder="example@gmail.com" class="w-full px-4 py-2.5 bg-gray-200 border-2 border-transparent rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm">
+          </div>
+          <div class="space-y-1">
+            <label for="signin-password" class="text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-1">Password</label>
+            <div class="relative">
+                <input id="signin-password" type="password" placeholder="Password" class="w-full px-4 py-2.5 bg-gray-200 border-2 border-transparent rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all pr-12 text-sm">
+                <button type="button" aria-label="Toggle password visibility" onclick="togglePassword('signin-password', this)" class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400">
+                    <svg data-eye-open xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                    <svg data-eye-closed xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0 1 12 19c-4.478 0-8.268-2.943-9.542-7a9.956 9.956 0 0 1 3.034-4.568m3.122-1.98A9.958 9.958 0 0 1 12 5c4.478 0 8.268 2.943 9.542 7a9.97 9.97 0 0 1-4.293 5.143M3 3l18 18" /></svg>
+                </button>
+            </div>
+          </div>
+          <div class="flex justify-end -mt-1">
+            <a href="#" id="forgotPasswordLink" class="text-[11px] font-semibold text-blue-600 hover:text-blue-700">Forgot Password?</a>
+          </div>
+          <button id="signin-submit-btn" type="submit" class="w-full py-3.5 bg-blue-500 text-white font-black rounded-xl shadow-lg uppercase tracking-widest mt-2 text-xs disabled:opacity-60 disabled:cursor-not-allowed">Sign In</button>
+          <p class="text-center text-xs text-gray-500 mt-4">New User? <a href="#" class="text-blue-600 font-bold" onclick="event.preventDefault(); switchToSignUp();">Signup</a></p>
+        </form>
+
+        <form id="forgotPasswordForm" class="hidden space-y-3" novalidate>
+          <div id="forgot-help-text" class="rounded-xl border border-blue-100 bg-blue-50 px-3 py-2 text-[11px] text-blue-700">
+            Enter your account email and we will send a secure reset link.
+          </div>
+          <div class="flex justify-end -mt-1">
+            <a href="#" id="resetUseEmailLink" class="hidden text-[11px] font-semibold text-blue-600 hover:text-blue-700">Use another email</a>
+          </div>
+          <div class="space-y-1">
+            <label for="forgot-email" class="text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-1">Email</label>
+            <input id="forgot-email" type="email" placeholder="example@gmail.com" class="w-full px-4 py-2.5 bg-gray-200 border-2 border-transparent rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm">
+          </div>
+          <div id="forgot-password-fields" class="hidden space-y-3">
+            <div class="space-y-1">
+              <label for="forgot-new-password" class="text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-1">New Password</label>
+              <input id="forgot-new-password" type="password" placeholder="At least 8 characters" class="w-full px-4 py-2.5 bg-gray-200 border-2 border-transparent rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm">
+            </div>
+            <div class="space-y-1">
+              <label for="forgot-confirm-password" class="text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-1">Confirm Password</label>
+              <input id="forgot-confirm-password" type="password" placeholder="Confirm new password" class="w-full px-4 py-2.5 bg-gray-200 border-2 border-transparent rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm">
+            </div>
+          </div>
+          <button id="forgot-submit-btn" type="submit" class="w-full py-3.5 bg-blue-600 text-white font-black rounded-xl shadow-lg uppercase tracking-widest mt-2 text-xs disabled:opacity-60 disabled:cursor-not-allowed">Send Reset Link</button>
+          <p class="text-center text-xs text-gray-500 mt-4 pb-4">
+            Remembered your password?
+            <a href="#" class="text-blue-600 font-bold" onclick="event.preventDefault(); switchToSignIn();">Sign In</a>
+          </p>
+        </form>
+
+        <form id="signUpForm" class="hidden space-y-3" novalidate>
+          <div class="space-y-1">
+            <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-1">Full Name</label>
+            <input id="signup-name" type="text" placeholder="John Doe" class="w-full px-4 py-2.5 bg-gray-200 border-2 border-transparent rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm">
+          </div>
+          <div class="space-y-1">
+            <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-1">Email Address</label>
+            <input id="signup-email" type="email" placeholder="example@gmail.com" class="w-full px-4 py-2.5 bg-gray-200 border-2 border-transparent rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm">
+          </div>
+          <div class="space-y-1">
+            <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-1">Password</label>
+            <div class="relative">
+                <input id="signup-password" type="password" placeholder="Password" class="w-full px-4 py-2.5 bg-gray-200 border-2 border-transparent rounded-xl focus:ring-2 focus:ring-blue-500 outline-none pr-12 text-sm">
+                <button type="button" aria-label="Toggle password visibility" onclick="togglePassword('signup-password', this)" class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400">
+                    <svg data-eye-open xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                    <svg data-eye-closed xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0 1 12 19c-4.478 0-8.268-2.943-9.542-7a9.956 9.956 0 0 1 3.034-4.568m3.122-1.98A9.958 9.958 0 0 1 12 5c4.478 0 8.268 2.943 9.542 7a9.97 9.97 0 0 1-4.293 5.143M3 3l18 18" /></svg>
+                </button>
+            </div>
+            <p id="pass-hint" class="hidden text-[10px] text-red-600 font-bold px-1 leading-tight mt-1">
+              Password must be at least 8 characters.
+            </p>
+          </div>
+          <div class="space-y-1">
+            <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-1">Confirm Password</label>
+            <input id="signup-confirm" type="password" placeholder="Confirm Password" class="w-full px-4 py-2.5 bg-gray-200 border-2 border-transparent rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm">
+          </div>
+          <div class="space-y-1">
+            <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-1">Phone Number</label>
+            <input id="signup-phone" type="tel" placeholder="09XX XXX XXXX" class="w-full px-4 py-2.5 bg-gray-200 border-2 border-transparent rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm">
+          </div>
+          <button id="signup-submit-btn" type="submit" class="w-full py-3.5 bg-blue-600 text-white font-black rounded-xl shadow-lg uppercase tracking-widest mt-2 text-xs disabled:opacity-60 disabled:cursor-not-allowed">Create Account</button>
+          <p class="text-center text-xs text-gray-500 mt-4 pb-4">Already have an account? <a href="#" class="text-blue-600 font-bold" onclick="event.preventDefault(); switchToSignIn();">Sign In</a></p>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script src="api.js?v=20260230"></script>
+  <script>
+    const signInForm = document.getElementById('signInForm');
+    const signUpForm = document.getElementById('signUpForm');
+    const forgotPasswordForm = document.getElementById('forgotPasswordForm');
+    const passHint = document.getElementById('pass-hint');
+    const signInSubmitBtn = document.getElementById('signin-submit-btn');
+    const signUpSubmitBtn = document.getElementById('signup-submit-btn');
+    const forgotSubmitBtn = document.getElementById('forgot-submit-btn');
+    const forgotFields = document.getElementById('forgot-password-fields');
+    const forgotPasswordLink = document.getElementById('forgotPasswordLink');
+    const forgotHelpText = document.getElementById('forgot-help-text');
+    const resetUseEmailLink = document.getElementById('resetUseEmailLink');
+    const invalidClasses = ['border-red-500', 'bg-red-50', 'focus:ring-red-400'];
+    const validClasses = ['border-emerald-500', 'bg-emerald-50', 'focus:ring-emerald-400'];
+
+    let toastContainer = document.getElementById("contact-toast-container");
+    if (!toastContainer) {
+      toastContainer = document.createElement("div");
+      toastContainer.id = "contact-toast-container";
+      toastContainer.className = "fixed top-4 left-1/2 -translate-x-1/2 z-[120] flex flex-col items-center gap-2 pointer-events-none";
+      document.body.appendChild(toastContainer);
+    }
+    
+    const urlParams = new URLSearchParams(window.location.search);
+    const redirectTarget = urlParams.get('redirect');
+    const fromSource = urlParams.get('from');
+    const resetMode = urlParams.get('mode') === 'reset';
+    const resetTokenFromUrl = String(urlParams.get('token') || "").trim();
+    let forgotResetToken = resetMode ? resetTokenFromUrl : null;
+    const reservationTarget = `reservation.html${fromSource ? `?from=${encodeURIComponent(fromSource)}` : ""}`;
+
+    function sanitizeAvatarForCache(avatarUrl) {
+      const value = String(avatarUrl || "").trim();
+      if (!value || value.startsWith("data:image/")) return "";
+      return value;
+    }
+
+    function buildProfileCache(user) {
+      const profile = user || {};
+      return {
+        _id: profile._id || "",
+        role: profile.role || "user",
+        fullName: profile.fullName || "",
+        email: profile.email || "",
+        phone: profile.phone || "",
+        bio: profile.bio || "",
+        avatarUrl: sanitizeAvatarForCache(profile.avatarUrl || ""),
+        emailNotificationsEnabled: profile.emailNotificationsEnabled !== false,
+        createdAt: profile.createdAt || ""
+      };
+    }
+
+    function persistLoginCache(user) {
+      localStorage.setItem("userLoggedIn", "true");
+      try {
+        localStorage.setItem("bcp_profile", JSON.stringify(buildProfileCache(user)));
+      } catch (_error) {
+        // Keep auth flow working even when localStorage quota is full.
+      }
+    }
+
+    async function getActiveSystemMode() {
+      try {
+        if (window.API?.system?.status) {
+          const response = await API.system.status();
+          return response?.system?.activeMode || null;
+        }
+        const response = await fetch(`${window.location.origin}/api/system/status`, { method: "GET" });
+        const data = await response.json().catch(() => ({}));
+        return data?.system?.activeMode || null;
+      } catch (_error) {
+        return null;
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      if (resetMode && resetTokenFromUrl) {
+        switchToForgotPassword({ resetFlow: true });
+        return;
+      }
+      if (!window.API?.ensureSession) return;
+      const session = await API.ensureSession({ redirectTo: null });
+      if (!session?.ok) return;
+      const activeMode = await getActiveSystemMode();
+      const role = session.user?.role;
+      if (activeMode && role !== "admin") {
+        API.clearToken?.();
+        localStorage.removeItem("userLoggedIn");
+        return;
+      }
+      if (redirectTarget === 'reservation') {
+        window.location.href = reservationTarget;
+        return;
+      }
+      window.location.href = role === 'admin' ? 'admin_dashboard.html' : 'dashboard.html';
+    });
+
+    function togglePassword(inputId, triggerBtn) {
+        const input = document.getElementById(inputId);
+        const isHidden = input.type === "password";
+        input.type = isHidden ? "text" : "password";
+        if (triggerBtn) {
+          triggerBtn.querySelector('[data-eye-open]')?.classList.toggle('hidden', isHidden);
+          triggerBtn.querySelector('[data-eye-closed]')?.classList.toggle('hidden', !isHidden);
+        }
+    }
+
+    function showPopMessage(msg, type = 'error') {
+        const toast = document.createElement("div");
+        const isSuccess = type === "success";
+        toast.className = [
+          "pointer-events-auto",
+          "min-w-[250px]",
+          "max-w-[92vw]",
+          "px-4",
+          "py-3",
+          "rounded-xl",
+          "shadow-lg",
+          "text-sm",
+          "font-bold",
+          "text-white",
+          "translate-y-2",
+          "opacity-0",
+          "transition-all",
+          "duration-200",
+          isSuccess ? "bg-emerald-600" : "bg-red-600"
+        ].join(" ");
+        toast.textContent = msg;
+        toastContainer.appendChild(toast);
+        requestAnimationFrame(() => {
+          toast.classList.remove("translate-y-2", "opacity-0");
+        });
+        setTimeout(() => {
+          toast.classList.add("translate-y-2", "opacity-0");
+          setTimeout(() => toast.remove(), 220);
+        }, 2600);
+    }
+
+    const signupPasswordInput = document.getElementById('signup-password');
+    signupPasswordInput.addEventListener('input', () => {
+      const show = signupPasswordInput.value.length > 0 && signupPasswordInput.value.length < 8;
+      passHint.classList.toggle('hidden', !show);
+    });
+
+    function applyBorder(element, status) {
+        element.classList.remove(...invalidClasses, ...validClasses);
+        if (status === 'success') element.classList.add(...validClasses);
+        else if (status === 'error' || status === 'warning') element.classList.add(...invalidClasses);
+    }
+
+    signInForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        if (!window.API?.auth?.signin) {
+            showPopMessage("Login service not ready. Please refresh.", 'error');
+            return;
+        }
+        const email = document.getElementById('signin-email');
+        const pass = document.getElementById('signin-password');
+        const isEmailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value.toLowerCase());
+        const isPassOk = pass.value.length >= 8;
+        applyBorder(email, isEmailOk ? 'success' : 'error');
+        applyBorder(pass, isPassOk ? 'success' : 'error');
+        if (!isEmailOk || !isPassOk) { showPopMessage(!isPassOk ? "Password must be at least 8 characters." : "Invalid Email or Password!", 'warning'); return; }
+        try {
+            signInSubmitBtn.disabled = true;
+            signInSubmitBtn.textContent = "Signing In...";
+            const response = await API.auth.signin({ email: email.value.toLowerCase(), password: pass.value });
+            if (response.success) {
+                API.setToken(response.token);
+                persistLoginCache(response.user || {});
+                const activeMode = await getActiveSystemMode();
+                const role = response.user?.role;
+                if (activeMode && role !== "admin") {
+                    API.clearToken?.();
+                    localStorage.removeItem("userLoggedIn");
+                    showPopMessage("System is in maintenance mode. Only admin access is available right now.", "error");
+                    return;
+                }
+                showPopMessage("Sign in successful!", 'success');
+                setTimeout(() => {
+                    if (redirectTarget === 'reservation') {
+                        window.location.href = reservationTarget;
+                        return;
+                    }
+                    window.location.href = role === 'admin' ? "admin_dashboard.html" : "dashboard.html";
+                }, 1500);
+            }
+        } catch (error) { showPopMessage(error.message || "Sign in failed!", 'error'); }
+        finally {
+            signInSubmitBtn.disabled = false;
+            signInSubmitBtn.textContent = "Sign In";
+        }
+    });
+
+    signUpForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const email = document.getElementById('signup-email');
+        const pass = document.getElementById('signup-password');
+        const confirm = document.getElementById('signup-confirm');
+        const name = document.getElementById('signup-name');
+        const phone = document.getElementById('signup-phone');
+
+        const isEmailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value.toLowerCase());
+        const isPassOk = pass.value.length >= 8;
+        const isConfirmOk = confirm.value === pass.value && pass.value !== "";
+        const isNameOk = name.value.trim().length > 1;
+        const normalizedPhone = phone.value.replace(/\D/g, "");
+        const isPhoneOk = normalizedPhone.length >= 10 && normalizedPhone.length <= 15;
+
+        applyBorder(name, isNameOk ? 'success' : 'error');
+        applyBorder(email, isEmailOk ? 'success' : 'error');
+        applyBorder(pass, isPassOk ? 'success' : 'error');
+        applyBorder(confirm, isConfirmOk ? 'success' : 'error');
+        applyBorder(phone, isPhoneOk ? 'success' : 'error');
+
+        if (!isEmailOk || !isPassOk || !isConfirmOk || !isNameOk || !isPhoneOk) {
+            if (!isPassOk) {
+                passHint.classList.remove('hidden');
+                showPopMessage("Password must be at least 8 characters.", 'error');
+                return;
+            }
+            showPopMessage("Check all requirements.", 'error');
+            return;
+        }
+
+        try {
+            signUpSubmitBtn.disabled = true;
+            signUpSubmitBtn.textContent = "Creating...";
+            const response = await API.auth.signup({ fullName: name.value.trim(), email: email.value.toLowerCase(), phone: normalizedPhone, password: pass.value });
+            if (response.success) {
+                API.setToken(response.token);
+                persistLoginCache(response.user || {});
+                showPopMessage("Account created!", 'success');
+                setTimeout(() => { window.location.href = "dashboard.html"; }, 1500);
+            }
+        } catch (error) { showPopMessage(error.message || "Sign up failed!", 'error'); }
+        finally {
+            signUpSubmitBtn.disabled = false;
+            signUpSubmitBtn.textContent = "Create Account";
+        }
+    });
+
+    forgotPasswordForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const emailEl = document.getElementById('forgot-email');
+      const newPassEl = document.getElementById('forgot-new-password');
+      const confirmEl = document.getElementById('forgot-confirm-password');
+      const email = String(emailEl.value || "").toLowerCase().trim();
+
+      if (!forgotResetToken) {
+        const isEmailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+        applyBorder(emailEl, isEmailOk ? 'success' : 'error');
+        if (!isEmailOk) {
+          showPopMessage("Enter a valid email.", "error");
+          return;
+        }
+        try {
+          forgotSubmitBtn.disabled = true;
+          forgotSubmitBtn.textContent = "Sending...";
+          await API.auth.forgotPassword({ email });
+          showPopMessage("If the email exists, a reset link has been sent.", "success");
+          forgotPasswordForm.reset();
+        } catch (error) {
+          showPopMessage(error.message || "Could not start reset.", "error");
+        } finally {
+          forgotSubmitBtn.disabled = false;
+          forgotSubmitBtn.textContent = "Send Reset Link";
+        }
+        return;
+      }
+
+      const newPass = String(newPassEl.value || "");
+      const confirm = String(confirmEl.value || "");
+      const isPassOk = newPass.length >= 8;
+      const isConfirmOk = confirm === newPass && confirm.length >= 8;
+      applyBorder(newPassEl, isPassOk ? 'success' : 'error');
+      applyBorder(confirmEl, isConfirmOk ? 'success' : 'error');
+      if (!isPassOk || !isConfirmOk) {
+        showPopMessage("New password must be 8+ chars and match confirmation.", "error");
+        return;
+      }
+
+      try {
+        forgotSubmitBtn.disabled = true;
+        forgotSubmitBtn.textContent = "Updating...";
+        await API.auth.resetPassword({ token: forgotResetToken, password: newPass });
+        showPopMessage("Password updated. Please sign in.", "success");
+        forgotResetToken = null;
+        forgotPasswordForm.reset();
+        forgotFields.classList.add('hidden');
+        forgotSubmitBtn.textContent = "Send Reset Link";
+        forgotHelpText.textContent = "Enter your account email and we will send a secure reset link.";
+        const cleanUrl = `${window.location.pathname}${window.location.search.replace(/([?&])mode=reset(&|$)/, "$1").replace(/([?&])token=[^&]*(&|$)/, "$1").replace(/[?&]$/, "")}`;
+        window.history.replaceState({}, document.title, cleanUrl);
+        switchToSignIn();
+      } catch (error) {
+        showPopMessage(error.message || "Reset failed. Try again.", "error");
+      } finally {
+        forgotSubmitBtn.disabled = false;
+      }
+    });
+
+    function switchToSignUp() {
+      document.getElementById('auth-title').textContent = "Join Us!";
+      document.getElementById('mobile-auth-title').textContent = "Join Us!";
+      document.getElementById('signUpTab').classList.add('bg-white', 'text-blue-600', 'shadow-sm');
+      document.getElementById('signInTab').classList.remove('bg-white', 'text-blue-600', 'shadow-sm');
+      signUpForm.classList.remove('hidden');
+      signInForm.classList.add('hidden');
+      forgotPasswordForm.classList.add('hidden');
+    }
+
+    function switchToSignIn() {
+      document.getElementById('auth-title').textContent = "Welcome back!";
+      document.getElementById('mobile-auth-title').textContent = "Welcome back!";
+      document.getElementById('signInTab').classList.add('bg-white', 'text-blue-600', 'shadow-sm');
+      document.getElementById('signUpTab').classList.remove('bg-white', 'text-blue-600', 'shadow-sm');
+      signInForm.classList.remove('hidden');
+      signUpForm.classList.add('hidden');
+      forgotPasswordForm.classList.add('hidden');
+      forgotResetToken = null;
+      forgotPasswordForm.reset();
+      forgotFields.classList.add('hidden');
+      forgotSubmitBtn.textContent = "Send Reset Link";
+      forgotHelpText.textContent = "Enter your account email and we will send a secure reset link.";
+      document.getElementById('forgot-email').disabled = false;
+      resetUseEmailLink.classList.add('hidden');
+    }
+
+    function switchToForgotPassword({ resetFlow = false } = {}) {
+      document.getElementById('auth-title').textContent = "Reset password";
+      document.getElementById('mobile-auth-title').textContent = "Reset password";
+      document.getElementById('signInTab').classList.remove('bg-white', 'text-blue-600', 'shadow-sm');
+      document.getElementById('signUpTab').classList.remove('bg-white', 'text-blue-600', 'shadow-sm');
+      signInForm.classList.add('hidden');
+      signUpForm.classList.add('hidden');
+      forgotPasswordForm.classList.remove('hidden');
+      const forgotEmailInput = document.getElementById('forgot-email');
+      if (resetFlow) {
+        forgotFields.classList.remove('hidden');
+        forgotEmailInput.disabled = false;
+        forgotHelpText.textContent = "Set your new password. This reset link is single-use and expires soon.";
+        forgotSubmitBtn.textContent = "Reset Password";
+        resetUseEmailLink.classList.remove('hidden');
+      } else {
+        forgotFields.classList.add('hidden');
+        forgotEmailInput.disabled = false;
+        forgotHelpText.textContent = "Enter your account email and we will send a secure reset link.";
+        forgotSubmitBtn.textContent = "Send Reset Link";
+        resetUseEmailLink.classList.add('hidden');
+      }
+    }
+
+    document.getElementById('signInTab').addEventListener('click', switchToSignIn);
+    document.getElementById('signUpTab').addEventListener('click', switchToSignUp);
+    forgotPasswordLink.addEventListener('click', (event) => {
+      event.preventDefault();
+      switchToForgotPassword();
+    });
+    resetUseEmailLink.addEventListener('click', (event) => {
+      event.preventDefault();
+      forgotResetToken = null;
+      const cleanUrl = `${window.location.pathname}${window.location.search.replace(/([?&])mode=reset(&|$)/, "$1").replace(/([?&])token=[^&]*(&|$)/, "$1").replace(/[?&]$/, "")}`;
+      window.history.replaceState({}, document.title, cleanUrl);
+      switchToForgotPassword();
+    });
+  </script>
+  <script src="chat-widget.js"></script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+

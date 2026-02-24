@@ -1,0 +1,1639 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <link rel="icon" type="image/png" href="/favicon.png?v=2">
+  <link rel="icon" href="/favicon.ico?v=2" type="image/x-icon">
+  <link rel="shortcut icon" href="/favicon.ico?v=2" type="image/x-icon">
+  <title>SnapQueue</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+  <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .touch-manipulation { touch-action: manipulation; }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    :root {
+      --promo-bg: #8b0000;
+      --promo-overlay: rgba(0, 0, 0, 0.18);
+      --promo-accent: #ffffff;
+      --promo-text: #ffffff;
+      --promo-subtext: #ffe2a8;
+      --promo-btn-bg: #ffffff;
+      --promo-btn-text: #a70e0e;
+      --promo-btn-hover: #ffe9e9;
+      --surface: #ffffff;
+      --surface-soft: #f6f8fc;
+      --ink: #0f172a;
+      --muted: #64748b;
+      --brand: #1d4ed8;
+    }
+
+    /* Mobile Menu Styles */
+    #mobile-menu {
+      position: fixed;
+      left: 0;
+      top: 0;
+      height: 100vh;
+      width: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 40;
+      display: none;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    
+    #mobile-menu.active {
+      display: flex;
+      opacity: 1;
+    }
+    
+    #mobile-menu-content {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 80%;
+      max-width: 280px;
+      height: 100vh;
+      background: white;
+      flex-direction: column;
+      transform: translateX(-100%);
+      transition: transform 0.3s ease;
+      overflow-y: auto;
+      box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+    }
+    
+    #mobile-menu.active #mobile-menu-content {
+      transform: translateX(0);
+    }
+
+    .promo-shell {
+      position: relative;
+      overflow: hidden;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+      background:
+        linear-gradient(var(--promo-overlay), var(--promo-overlay)),
+        radial-gradient(circle at 12px 12px, rgba(255, 255, 255, 0.08) 1.5px, transparent 1.5px),
+        linear-gradient(135deg, #a10000 0%, var(--promo-bg) 35%, #6f0000 100%);
+      background-size: auto, 24px 24px, auto;
+    }
+
+    .promo-content {
+      min-height: 74px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      text-align: center;
+      color: var(--promo-text);
+    }
+
+    .promo-badge {
+      font-size: 10px;
+      letter-spacing: 0.15em;
+      font-weight: 800;
+      color: var(--promo-subtext);
+      text-transform: uppercase;
+    }
+
+    .promo-title {
+      font-size: 18px;
+      line-height: 1.15;
+      font-weight: 900;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+    }
+
+    .promo-desc {
+      font-size: 11px;
+      color: #ffd9d9;
+      font-weight: 600;
+      margin-top: 2px;
+    }
+
+    .promo-cta {
+      flex-shrink: 0;
+      padding: 8px 14px;
+      border-radius: 8px;
+      background: var(--promo-btn-bg);
+      color: var(--promo-btn-text);
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      transition: 180ms ease;
+    }
+
+    .promo-cta:hover {
+      background: var(--promo-btn-hover);
+      transform: translateY(-1px);
+    }
+
+    @media (max-width: 640px) {
+      .promo-content {
+        min-height: 84px;
+        padding: 10px 12px;
+        gap: 0.6rem;
+      }
+      .promo-title {
+        font-size: 14px;
+      }
+      .promo-desc {
+        font-size: 10px;
+      }
+      .promo-cta {
+        padding: 7px 10px;
+        font-size: 10px;
+      }
+    }
+  </style>
+</head>
+<body class="font-poppins bg-slate-50 text-slate-900">
+  <div id="promo-banner-wrap" class="hidden relative z-50 promo-shell">
+    <a id="promo-banner-link" href="#" target="_blank" rel="noopener noreferrer" class="block">
+      <div class="max-w-7xl mx-auto px-3 sm:px-4 md:px-6">
+        <div class="promo-content">
+          <div class="min-w-0">
+            <p class="promo-badge">Limited Time Offer</p>
+            <p id="promo-banner-title" class="promo-title truncate"></p>
+            <p id="promo-banner-description" class="promo-desc truncate"></p>
+          </div>
+          <span class="promo-cta">Click Here</span>
+        </div>
+      </div>
+    </a>
+  </div>
+
+  <!-- Mobile Menu -->
+  <div id="mobile-menu" onclick="toggleMobileMenu()">
+    <div id="mobile-menu-content" onclick="event.stopPropagation()" class="pt-16 sm:pt-20 px-4 sm:px-6">
+      <div class="space-y-1.5 sm:space-y-2">
+        <a href="#home" onclick="toggleMobileMenu()" class="block px-3.5 sm:px-4 py-2.5 sm:py-3 rounded-xl text-sm sm:text-base text-slate-700 hover:bg-blue-50 hover:text-blue-700 transition-all font-semibold">Home</a>
+        <a href="#about" onclick="toggleMobileMenu()" class="block px-3.5 sm:px-4 py-2.5 sm:py-3 rounded-xl text-sm sm:text-base text-slate-700 hover:bg-blue-50 hover:text-blue-700 transition-all font-semibold">About</a>
+        <a href="#samples" onclick="toggleMobileMenu()" class="block px-3.5 sm:px-4 py-2.5 sm:py-3 rounded-xl text-sm sm:text-base text-slate-700 hover:bg-blue-50 hover:text-blue-700 transition-all font-semibold">Samples</a>
+        <a href="reservation.html?from=home" onclick="toggleMobileMenu()" class="block px-3.5 sm:px-4 py-2.5 sm:py-3 rounded-xl text-sm sm:text-base text-slate-700 hover:bg-blue-50 hover:text-blue-700 transition-all font-semibold">Reservation</a>
+        <a href="#contact" onclick="toggleMobileMenu()" class="block px-3.5 sm:px-4 py-2.5 sm:py-3 rounded-xl text-sm sm:text-base text-slate-700 hover:bg-blue-50 hover:text-blue-700 transition-all font-semibold">Contact</a>
+      </div>
+      <div id="mobile-auth-wrap" class="mt-6 sm:mt-8 pt-6 sm:pt-8 border-t border-gray-200">
+        <a id="mobile-signin-link" href="login.html" onclick="toggleMobileMenu()" class="block w-full px-4 py-3 text-center text-sm sm:text-base bg-blue-600 text-white font-extrabold rounded-xl hover:bg-blue-700 transition duration-300 shadow-md shadow-blue-200 touch-manipulation active:opacity-90">Sign In</a>
+        <a id="mobile-dashboard-link" href="dashboard.html" onclick="toggleMobileMenu()" class="hidden w-full px-4 py-3 text-center text-sm sm:text-base bg-slate-900 text-white font-extrabold rounded-xl hover:bg-slate-800 transition duration-300 shadow-md touch-manipulation active:opacity-90">Dashboard</a>
+      </div>
+    </div>
+  </div>
+
+  <nav class="sticky top-0 z-50 bg-white/90 backdrop-blur-xl border-b border-slate-200 shadow-sm">
+      <div class="max-w-7xl mx-auto px-3 sm:px-4 md:px-6">
+        <div class="flex justify-between items-center h-12 sm:h-14 md:h-16">
+
+          <a href="/" class="flex items-center gap-2.5">
+            <span class="inline-flex w-8 h-8 items-center justify-center rounded-xl bg-blue-600 text-white shadow-md shadow-blue-200">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7a2 2 0 012-2h2l1-1h6l1 1h2a2 2 0 012 2v10a2 2 0 01-2 2H6a2 2 0 01-2-2V7z" />
+                <circle cx="12" cy="13" r="3" stroke-width="2" />
+              </svg>
+            </span>
+            <div class="leading-none">
+              <h1 class="text-base sm:text-lg md:text-xl font-black tracking-tight text-slate-900">SnapQueue</h1>
+              <p class="text-[9px] uppercase tracking-[0.18em] text-blue-600 font-extrabold">Studio</p>
+            </div>
+          </a>
+
+          <div class="hidden md:flex items-center gap-2 lg:gap-3">
+             <a href="#home" class="relative px-3 py-2 rounded-xl text-xs lg:text-sm font-bold text-slate-600 hover:text-blue-700 hover:bg-blue-50 transition duration-300 group">
+              Home<span class="absolute left-3 right-3 -bottom-[2px] h-[2px] scale-x-0 bg-blue-500 transition-transform duration-300 group-hover:scale-x-100 origin-left"></span>
+            </a>
+            <a href="#about" class="relative px-3 py-2 rounded-xl text-xs lg:text-sm font-bold text-slate-600 hover:text-blue-700 hover:bg-blue-50 transition duration-300 group">
+              About<span class="absolute left-3 right-3 -bottom-[2px] h-[2px] scale-x-0 bg-blue-500 transition-transform duration-300 group-hover:scale-x-100 origin-left"></span>
+            </a>
+            <a href="#samples" class="relative px-3 py-2 rounded-xl text-xs lg:text-sm font-bold text-slate-600 hover:text-blue-700 hover:bg-blue-50 transition duration-300 group">
+              Samples<span class="absolute left-3 right-3 -bottom-[2px] h-[2px] scale-x-0 bg-blue-500 transition-transform duration-300 group-hover:scale-x-100 origin-left"></span>
+            </a>
+            <a href="reservation.html?from=home" class="relative px-3 py-2 rounded-xl text-xs lg:text-sm font-bold text-slate-600 hover:text-blue-700 hover:bg-blue-50 transition duration-300 group">
+              Reservation<span class="absolute left-3 right-3 -bottom-[2px] h-[2px] scale-x-0 bg-blue-500 transition-transform duration-300 group-hover:scale-x-100 origin-left"></span>
+            </a>
+            <a href="#contact" class="relative px-3 py-2 rounded-xl text-xs lg:text-sm font-bold text-slate-600 hover:text-blue-700 hover:bg-blue-50 transition duration-300 group">
+              Contact<span class="absolute left-3 right-3 -bottom-[2px] h-[2px] scale-x-0 bg-blue-500 transition-transform duration-300 group-hover:scale-x-100 origin-left"></span>
+            </a>
+
+            <a id="desktop-signin-link" href="login.html" class="ml-1 px-4 py-2.5 text-xs lg:text-sm bg-blue-600 text-white font-extrabold rounded-xl hover:bg-blue-700 transition duration-300 shadow-md shadow-blue-200 touch-manipulation">Sign In</a>
+            <a id="desktop-dashboard-link" href="dashboard.html" class="hidden items-center gap-2 pl-2 pr-3 py-1.5 rounded-full border border-slate-200 bg-white hover:border-blue-200 hover:bg-blue-50 transition-all shadow-sm" title="Open dashboard">
+              <img id="desktop-avatar-img" src="" alt="Profile avatar" class="w-8 h-8 rounded-full object-cover border border-slate-200">
+              <span id="desktop-avatar-name" class="text-xs font-extrabold text-slate-700 max-w-[140px] truncate">Dashboard</span>
+            </a>
+          </div>
+
+          <button id="hamburger-btn" onclick="toggleMobileMenu()" class="md:hidden p-2 hover:bg-slate-100 rounded-lg transition-colors touch-manipulation active:bg-slate-200">
+            <svg id="hamburger-icon" class="w-5 h-5 sm:w-6 sm:h-6 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+            <svg id="close-icon" class="hidden w-5 h-5 sm:w-6 sm:h-6 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+      </div>
+    </nav>
+  </header>
+
+  <div id="home" class="relative isolate overflow-hidden bg-gradient-to-b from-white via-slate-50 to-blue-50/40 min-h-[calc(100svh-3rem)] sm:min-h-[calc(100svh-3.5rem)] md:min-h-[calc(100svh-4rem)] flex items-center py-6 sm:py-8 md:py-10 lg:py-12">
+  <img src="bg.jpg" alt="" class="absolute inset-0 -z-10 size-full object-cover object-center opacity-[0.07]" />
+  <div aria-hidden="true" class="hidden sm:absolute sm:-top-10 sm:right-1/2 sm:-z-10 sm:mr-10 sm:block sm:transform-gpu sm:blur-3xl">
+    <div class="gradient-blob"></div>
+  </div>
+  <div aria-hidden="true" class="absolute -top-52 left-1/2 -z-10 -translate-x-1/2 transform-gpu blur-3xl sm:-top-112 sm:ml-16 sm:translate-x-0">
+    <div class="gradient-blob"></div>
+  </div>
+  <div class="mx-auto max-w-7xl px-3 sm:px-4 md:px-6 lg:px-8">
+    <div class="mx-auto max-w-2xl lg:mx-0">
+      <p class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 border border-blue-100 text-[11px] font-extrabold uppercase tracking-widest text-blue-700">SnapQueue Studio</p>
+      <h2 class="mt-3 text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-black tracking-tight text-slate-900 leading-tight">Your Budget Friendly Photographer</h2>
+      <p class="mt-4 sm:mt-6 md:mt-8 text-sm sm:text-base md:text-lg lg:text-xl font-medium text-pretty text-slate-600">Let us turn your moments into memories that last forever</p>
+    </div>
+    <div class="mx-auto mt-6 sm:mt-8 md:mt-10 max-w-2xl lg:mx-0 lg:max-w-none">
+      <div class="grid grid-cols-1 gap-x-6 sm:gap-x-8 gap-y-4 sm:gap-y-6 sm:grid-cols-2 md:flex lg:gap-x-10">
+        <button type="button" onclick="location.href='reservation.html?from=home'" class="px-5 sm:px-7 py-3 sm:py-3.5 bg-blue-600 text-white font-black text-sm sm:text-base rounded-xl hover:bg-blue-700 transition shadow-lg shadow-blue-200/70 touch-manipulation active:opacity-90">Book Now</button>
+        <button type="button" onclick="location.href='gallery.html'" class="px-5 sm:px-7 py-3 sm:py-3.5 border border-slate-300 bg-white text-slate-800 font-black text-sm sm:text-base rounded-xl hover:bg-slate-100 transition touch-manipulation active:opacity-90">Explore Gallery</button>
+      </div>
+      <dl class="mt-8 sm:mt-12 md:mt-16 grid grid-cols-1 gap-4 sm:gap-6 md:gap-8 sm:mt-16 md:mt-20 sm:grid-cols-2 lg:grid-cols-4">
+        <div class="flex flex-col-reverse gap-1 p-4 rounded-2xl bg-white border border-slate-200 shadow-sm">
+          <dt class="text-xs sm:text-sm md:text-base/7 text-slate-600">Happy Clients</dt>
+          <dd id="home-stat-happy-clients" class="text-2xl sm:text-3xl md:text-4xl font-black tracking-tight text-slate-900">0</dd>
+        </div>
+        <div class="flex flex-col-reverse gap-1 p-4 rounded-2xl bg-white border border-slate-200 shadow-sm">
+          <dt class="text-xs sm:text-sm md:text-base/7 text-slate-600">Sessions Completed</dt>
+          <dd id="home-stat-sessions-completed" class="text-2xl sm:text-3xl md:text-4xl font-black tracking-tight text-slate-900">0</dd>
+        </div>
+        <div class="flex flex-col-reverse gap-1 p-4 rounded-2xl bg-white border border-slate-200 shadow-sm">
+          <dt class="text-xs sm:text-sm md:text-base/7 text-slate-600">Pictures Delivered</dt>
+          <dd id="home-stat-pictures-delivered" class="text-2xl sm:text-3xl md:text-4xl font-black tracking-tight text-slate-900">0</dd>
+        </div>
+      </dl>
+    </div>
+  </div>
+</div>
+
+<div id="about" class="relative isolate overflow-hidden bg-white min-h-screen flex items-center py-8 sm:py-16 md:py-24 lg:py-32">
+  <div class="mx-auto max-w-7xl px-3 sm:px-4 md:px-6 lg:px-8">
+    <div class="mx-auto grid max-w-2xl grid-cols-1 gap-4 sm:gap-6 md:gap-x-12 md:gap-y-12 lg:gap-y-16 lg:mx-0 lg:max-w-none lg:grid-cols-2 lg:items-start">
+      
+      <div class="mx-auto max-w-2xl lg:mx-0 bg-slate-50 border border-slate-200 rounded-3xl p-5 sm:p-7 shadow-sm">
+      <h1 class="text-2xl sm:text-4xl md:text-5xl font-black tracking-tight text-slate-900">
+        About SnapQueue</h1>
+        <p class="mt-4 sm:mt-6 md:mt-8 text-sm sm:text-base md:text-lg font-medium text-pretty text-slate-600">
+          Founded in March 2025, SnapQueue has been dedicated to capturing
+          life's most precious moments with artistic excellence and professional care.
+          Our team of experienced photographers brings creativity, technical expertise,
+          and a passion for storytelling to every shot.
+        </p>
+
+        <p class="mt-4 sm:mt-6 md:mt-8 text-sm sm:text-base text-pretty"> </p>
+
+        <h2 class="text-2xl sm:text-4xl md:text-5xl font-black tracking-tight text-slate-900">
+          Our Mission
+        </h2>
+        <p class="mt-4 sm:mt-6 md:mt-8 text-sm sm:text-base md:text-lg font-medium text-pretty text-slate-600">
+          To provide exceptional photography services that exceed expectations,
+          preserve memories, and help our clients shine. We believe every photo tells
+          a story, and we're here to help you tell yours beautifully.
+        </p>
+      </div>
+
+      <div class="w-full max-w-xl mx-auto">
+        <div class="relative overflow-hidden rounded-3xl border border-slate-200 bg-gradient-to-br from-slate-900 via-slate-800 to-blue-950 p-5 sm:p-6 shadow-2xl shadow-blue-900/20">
+          <div class="absolute -top-20 -right-20 w-52 h-52 rounded-full bg-blue-400/25 blur-3xl"></div>
+          <div class="absolute -bottom-16 -left-14 w-48 h-48 rounded-full bg-cyan-300/20 blur-3xl"></div>
+          <div class="relative">
+            <p class="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[10px] font-extrabold uppercase tracking-[0.16em] text-blue-100">Package Snapshot</p>
+            <h3 class="mt-4 text-2xl sm:text-3xl font-black tracking-tight text-white">Flexible Packages, Clear Pricing</h3>
+            <p class="mt-2 text-sm text-blue-100/90 leading-relaxed">Choose a package that fits your event and budget. From essentials to full premium coverage.</p>
+
+            <div class="mt-5 grid grid-cols-2 gap-3">
+              <div class="rounded-2xl border border-white/15 bg-white/10 p-3">
+                <p class="text-[11px] uppercase tracking-wider text-blue-100/80 font-bold">Starter</p>
+                <p class="mt-1 text-xl font-black text-white">PHP 2,700</p>
+              </div>
+              <div class="rounded-2xl border border-white/15 bg-white/10 p-3">
+                <p class="text-[11px] uppercase tracking-wider text-blue-100/80 font-bold">Premium</p>
+                <p class="mt-1 text-xl font-black text-white">PHP 4,500</p>
+              </div>
+            </div>
+
+            <div class="mt-4 space-y-2">
+              <div class="flex items-center gap-2 rounded-xl border border-white/10 bg-white/10 px-3 py-2 text-sm text-blue-50">
+                <span class="inline-flex h-6 w-6 items-center justify-center rounded-lg bg-white/20 font-black text-xs">01</span>
+                Basic: Softcopy only - PHP 2,700
+              </div>
+              <div class="flex items-center gap-2 rounded-xl border border-white/10 bg-white/10 px-3 py-2 text-sm text-blue-50">
+                <span class="inline-flex h-6 w-6 items-center justify-center rounded-lg bg-white/20 font-black text-xs">02</span>
+                Standard: Softcopy + hardcopy - PHP 3,500
+              </div>
+              <div class="flex items-center gap-2 rounded-xl border border-white/10 bg-white/10 px-3 py-2 text-sm text-blue-50">
+                <span class="inline-flex h-6 w-6 items-center justify-center rounded-lg bg-white/20 font-black text-xs">03</span>
+                Premium: Softcopy + hardcopy + video - PHP 4,500
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<section id="samples" class="w-full bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-white min-h-screen flex flex-col justify-center py-14 sm:py-20 md:py-24">
+  <div class="max-w-6xl mx-auto px-3 sm:px-4 md:px-6 text-center">
+    <p class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/20 text-[11px] font-extrabold uppercase tracking-widest text-blue-200 mb-4">Portfolio Highlights</p>
+    <h3 class="text-3xl sm:text-4xl md:text-5xl font-black mb-3 sm:mb-4 tracking-tight">Featured Work</h3>
+    <p class="text-sm sm:text-base text-slate-300 max-w-2xl mx-auto mb-8 sm:mb-10">A curated set of our best sessions across events, portraits, and products.</p>
+
+    <div class="relative">
+      <div class="pointer-events-none hidden md:block absolute left-0 top-0 bottom-0 w-20 bg-gradient-to-r from-slate-950 to-transparent z-[5]"></div>
+      <div class="pointer-events-none hidden md:block absolute right-0 top-0 bottom-0 w-20 bg-gradient-to-l from-slate-950 to-transparent z-[5]"></div>
+      <button id="samples-prev" type="button" class="hidden md:flex absolute left-2 top-1/2 -translate-y-1/2 z-10 w-12 h-12 rounded-full bg-white/95 text-slate-900 shadow-xl border border-white/40 items-center justify-center hover:bg-white hover:scale-105 transition disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7" />
+        </svg>
+      </button>
+      <button id="samples-next" type="button" class="hidden md:flex absolute right-2 top-1/2 -translate-y-1/2 z-10 w-12 h-12 rounded-full bg-white/95 text-slate-900 shadow-xl border border-white/40 items-center justify-center hover:bg-white hover:scale-105 transition disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7" />
+        </svg>
+      </button>
+
+      <div id="samples-track" class="flex gap-3 sm:gap-6 overflow-x-auto snap-x snap-mandatory scroll-smooth pb-2 px-1 md:px-8 no-scrollbar">
+      <div class="photo-card shrink-0 w-[78%] sm:w-[48%] lg:w-[31%] group relative aspect-[4/5] rounded-2xl overflow-hidden shadow-2xl bg-gray-200 ring-1 ring-white/10 snap-start transition-transform duration-300 hover:-translate-y-1">
+        <img src="PAGENT.jpg" alt="Sample Photo 1" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
+        <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col items-center justify-end pb-4 sm:pb-6 md:pb-8 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+          <p class="text-white font-bold text-sm sm:text-base">Pagent</p>
+          <p class="text-blue-300 text-xs uppercase tracking-widest mt-1">Event</p>
+        </div>
+      </div>
+
+      <div class="photo-card shrink-0 w-[78%] sm:w-[48%] lg:w-[31%] group relative aspect-[4/5] rounded-2xl overflow-hidden shadow-2xl bg-gray-200 ring-1 ring-white/10 snap-start transition-transform duration-300 hover:-translate-y-1">
+        <img src="70TH BIRTHDAY.jpg" alt="Sample Photo 1" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
+        <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col items-center justify-end pb-4 sm:pb-6 md:pb-8 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+          <p class="text-white font-bold text-sm sm:text-base">70th Birthday</p>
+          <p class="text-blue-300 text-xs uppercase tracking-widest mt-1">Birthday</p>
+        </div>
+      </div>
+
+      <div class="photo-card shrink-0 w-[78%] sm:w-[48%] lg:w-[31%] group relative aspect-[4/5] rounded-2xl overflow-hidden shadow-2xl bg-gray-200 ring-1 ring-white/10 snap-start transition-transform duration-300 hover:-translate-y-1">
+        <img src="WEDDING PRENAP.jpg" alt="Sample Photo 1" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
+        <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col items-center justify-end pb-4 sm:pb-6 md:pb-8 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+          <p class="text-white font-bold text-sm sm:text-base"> Prenap Wedding</p>
+          <p class="text-blue-300 text-xs uppercase tracking-widest mt-1">Weddings</p>
+        </div>
+      </div>
+
+      <div class="photo-card shrink-0 w-[78%] sm:w-[48%] lg:w-[31%] group relative aspect-[4/5] rounded-2xl overflow-hidden shadow-2xl bg-gray-200 ring-1 ring-white/10 snap-start transition-transform duration-300 hover:-translate-y-1">
+        <img src="Portrait.webp" alt="Sample Photo 1" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
+        <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col items-center justify-end pb-4 sm:pb-6 md:pb-8 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+          <p class="text-white font-bold text-sm sm:text-base">Self Photography</p>
+          <p class="text-blue-300 text-xs uppercase tracking-widest mt-1">Portrait</p>
+        </div>
+      </div>
+
+      <div class="photo-card shrink-0 w-[78%] sm:w-[48%] lg:w-[31%] group relative aspect-[4/5] rounded-2xl overflow-hidden shadow-2xl bg-gray-200 ring-1 ring-white/10 snap-start transition-transform duration-300 hover:-translate-y-1">
+        <img src="Fashion.jpg" alt="Sample Photo 1" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
+        <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col items-center justify-end pb-4 sm:pb-6 md:pb-8 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+          <p class="text-white font-bold text-sm sm:text-base">Product Photography</p>
+          <p class="text-blue-300 text-xs uppercase tracking-widest mt-1">Fashion</p>
+        </div>
+      </div>
+
+      <div class="photo-card shrink-0 w-[78%] sm:w-[48%] lg:w-[31%] group relative aspect-[4/5] rounded-2xl overflow-hidden shadow-2xl bg-gray-200 ring-1 ring-white/10 snap-start transition-transform duration-300 hover:-translate-y-1">
+        <img src="2dac3de0-1770-4eb5-9e33-623b69eb4a4d.webp" alt="Sample Photo 1" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
+        <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col items-center justify-end pb-4 sm:pb-6 md:pb-8 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+          <p class="text-white font-bold text-sm sm:text-base">Street Photography</p>
+          <p class="text-blue-300 text-xs uppercase tracking-widest mt-1">Street</p>
+        </div>
+      </div>
+      </div>
+    </div>
+    <div id="samples-dots" class="mt-5 flex justify-center gap-2"></div>
+    <div class="text-center mt-8 sm:mt-12">
+      <a href="gallery.html" class="px-5 sm:px-7 py-2.5 sm:py-3 border border-slate-300/70 rounded-xl hover:bg-white hover:text-slate-900 inline-block text-white text-sm sm:text-base transition-all touch-manipulation active:opacity-80 font-extrabold shadow-md">View Full Gallery</a>
+    </div>
+  </div>
+</section>
+
+<section id="contact" class="w-full bg-white min-h-screen flex items-center py-16 sm:py-20">
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 bg-gradient-to-b from-slate-50 to-white border border-slate-200 rounded-3xl shadow-lg shadow-slate-200/50">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-10 items-start">
+      
+      <div class="flex flex-col h-full py-8 sm:py-10">
+        <p class="inline-flex w-fit items-center gap-2 px-3 py-1 rounded-full bg-blue-50 border border-blue-100 text-[11px] font-extrabold uppercase tracking-widest text-blue-700 mb-4">Contact Us</p>
+        <h2 class="text-3xl sm:text-4xl font-black mb-4 text-slate-900 tracking-tight">Get in Touch</h2>
+        <p class="text-slate-600 mb-8">Questions about packages, availability, or custom shoots? Reach out, we would love to hear from you.</p>
+
+        <div class="space-y-5 text-slate-700">
+          <div class="flex gap-4 items-start p-4 rounded-2xl bg-white border border-slate-200 shadow-sm">
+            <svg class="w-6 h-6 text-blue-600 flex-shrink-0 mt-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0l-9.75 6.75-9.75-6.75" />
+            </svg>
+            <div>
+              <h4 class="font-semibold">Email</h4>
+              <a href="mailto:otpaauthetication@gmail.com" class="text-blue-500 hover:underline">otpaauthetication@gmail.com</a>
+            </div>
+          </div>
+
+          <div class="flex gap-4 items-start p-4 rounded-2xl bg-white border border-slate-200 shadow-sm">
+            <svg class="w-6 h-6 text-blue-600 flex-shrink-0 mt-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z" />
+            </svg>
+            <div>
+              <h4 class="font-semibold">Phone</h4>
+              <a href="tel:+639095339528" class="text-blue-500 hover:underline">+639095339528</a>
+            </div>
+          </div>
+
+          <div class="flex gap-4 items-start p-4 rounded-2xl bg-white border border-slate-200 shadow-sm">
+            <svg class="w-6 h-6 text-blue-600 flex-shrink-0 mt-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
+            </svg>
+            <div>
+              <h4 class="font-semibold">Location</h4>
+              <p class="text-gray-600">Nueva Ecija, Philippines</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-auto pt-10">
+          <h4 class="font-semibold mb-4 text-gray-900">Follow Us</h4>
+          <ul class="flex gap-3 list-none p-0 m-0">
+            <li>
+              <a href="https://www.facebook.com/profile.php?id=100079708334779" target="_blank" rel="noopener noreferrer" class="w-10 h-10 rounded-lg bg-gray-100 text-gray-600 hover:bg-[#1877F2] hover:text-white transition-all flex items-center justify-center" aria-label="Facebook">
+                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z" /></svg>
+              </a>
+            </li>
+            <li>
+              <a href="mailto:otpaauthetication@gmail.com" class="w-10 h-10 rounded-lg bg-gray-100 text-gray-600 hover:bg-[#EA4335] hover:text-white transition-all flex items-center justify-center" aria-label="Email">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0l-9.75 6.75-9.75-6.75" /></svg>
+              </a>
+            </li>
+            <li>
+              <a href="https://www.instagram.com/petesoriaga/" target="_blank" rel="noopener noreferrer" class="w-10 h-10 rounded-lg bg-gray-100 text-gray-600 hover:bg-[#E4405F] hover:text-white transition-all flex items-center justify-center" aria-label="Instagram">
+                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849s-.011 3.585-.069 4.85c-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07s-3.584-.012-4.849-.07c-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849s.012-3.584.07-4.849c.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z" /></svg>
+              </a>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="bg-white shadow-xl shadow-slate-200/60 rounded-3xl p-6 sm:p-8 border border-slate-200 my-8 sm:my-10">
+        <form class="space-y-5" id="contactForm" novalidate>
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-2">Name</label>
+            <input type="text" name="name" placeholder="Your Name" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all" required>
+          </div>
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-2">Email Address</label>
+            <input type="email" name="email" placeholder="you@example.com" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all" required>
+          </div>
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-2">Subject</label>
+            <input type="text" name="subject" placeholder="Your subject" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all" required>
+          </div>
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-2">Message</label>
+            <textarea name="message" placeholder="How can we help you?" rows="4" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all" required></textarea>
+          </div>
+          <button type="submit" class="w-full bg-blue-600 text-white font-extrabold py-3 px-6 rounded-xl hover:bg-blue-700 hover:shadow-lg transform active:scale-[0.98] transition-all">
+            Send Message
+          </button>
+        </form>
+      </div>
+      
+    </div>
+  </div>
+</section>
+
+<section id="footer" class="bg-gradient-to-b from-slate-950 to-black text-slate-200 py-10 sm:py-12 md:py-14 border-t border-slate-800">
+  <div class="container mx-auto px-3 sm:px-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 sm:gap-8">
+    <div>
+      <h3 class="text-lg sm:text-xl font-black mb-3 sm:mb-4 text-white">SnapQueue</h3>
+      <p class="text-slate-400 text-sm sm:text-base">
+        Professional photography services capturing your most precious moments.
+        Weddings, portraits, events, and more.
+      </p>
+    </div>
+
+    <div>
+      <h3 class="text-lg sm:text-xl font-black mb-3 sm:mb-4 text-white">Quick Links</h3>
+      <ul class="space-y-1.5 sm:space-y-2 text-slate-400 text-sm sm:text-base">
+        <li><a href="#home" class="hover:text-blue-300 transition-colors">Home</a></li>
+        <li><a href="#about" class="hover:text-blue-300 transition-colors">About</a></li>
+        <li><a href="#samples" class="hover:text-blue-300 transition-colors">Samples</a></li>
+        <li><a href="#contact" class="hover:text-blue-300 transition-colors">Contact</a></li>
+        <li><a href="reservation.html?from=home" class="hover:text-blue-300 transition-colors">Reservation</a></li>
+      </ul>
+    </div>
+
+    <div>
+      <h3 class="text-lg sm:text-xl font-black mb-3 sm:mb-4 text-white">Contact</h3>
+      <ul class="space-y-1.5 sm:space-y-2 text-slate-400 text-sm sm:text-base">
+        <li>Email: <a href="mailto:otpaauthetication@gmail.com" class="hover:text-blue-300 transition-colors">otpaauthetication@gmail.com</a></li>
+        <li>Phone: <a href="tel:+639095339528" class="hover:text-blue-300 transition-colors">+639095339528</a></li>
+        <li>Location: Nueva Ecija, Philippines</li>
+      </ul>
+      <div class="flex gap-2 sm:gap-4 mt-3 sm:mt-4">
+        <a href="https://www.facebook.com/profile.php?id=100079708334779" target="_blank" rel="noopener noreferrer" class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-slate-800 hover:bg-[#1877F2] hover:text-white transition-colors flex items-center justify-center" aria-label="Facebook">
+          <svg class="w-4 h-4 sm:w-5 sm:h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M22 12.073C22 6.505 17.523 2 12 2S2 6.505 2 12.073c0 5.018 3.657 9.18 8.438 9.94v-7.03H7.898v-2.91h2.54V9.845c0-2.52 1.492-3.914 3.777-3.914 1.094 0 2.238.197 2.238.197v2.476h-1.26c-1.243 0-1.63.775-1.63 1.57v1.899h2.773l-.443 2.91h-2.33V22c4.78-.76 8.437-4.922 8.437-9.927z"/></svg>
+        </a>
+        <a href="https://www.instagram.com/petesoriaga/" target="_blank" rel="noopener noreferrer" class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-slate-800 hover:bg-[#E4405F] hover:text-white transition-colors flex items-center justify-center" aria-label="Instagram">
+          <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849s-.011 3.585-.069 4.85c-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07s-3.584-.012-4.849-.07c-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849s.012-3.584.07-4.849c.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
+        </a>
+        <a href="mailto:otpaauthetication@gmail.com" class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-slate-800 hover:bg-[#EA4335] hover:text-white transition-colors flex items-center justify-center" aria-label="Email">
+          <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0l-9.75 6.75-9.75-6.75" /></svg>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="mt-8 sm:mt-10 md:mt-12 text-center text-slate-500 text-xs sm:text-sm border-t border-slate-800 pt-6">
+    &copy; 2026 SnapQueue. All rights reserved.
+  </div>
+</section>
+
+  <button id="chat-toggle"
+    class="fixed bottom-6 right-6 z-[100] w-14 h-14 rounded-full bg-slate-900 text-white shadow-2xl transition-all hover:scale-105 flex items-center justify-center"
+    aria-label="Open chat">
+    <svg id="chat-open-icon" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.1" d="M21 11.5a8.5 8.5 0 01-8.5 8.5H8l-5 3V11.5A8.5 8.5 0 0111.5 3h1A8.5 8.5 0 0121 11.5z"/>
+    </svg>
+    <svg id="chat-close-icon" class="hidden w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+    </svg>
+  </button>
+
+  <div id="chat-window" class="hidden fixed inset-0 sm:inset-auto sm:bottom-24 sm:right-6 z-[110] w-full h-full sm:w-[380px] sm:h-[620px] sm:max-h-[calc(100vh-110px)] bg-white sm:rounded-[28px] shadow-2xl border border-slate-200 overflow-hidden flex flex-col transition-all duration-300 transform scale-95 opacity-0 origin-bottom-right">
+    <div id="chat-header" class="bg-gradient-to-b from-slate-800 to-slate-700 text-white px-5 pt-5 pb-6 transition-all duration-200">
+      <div class="flex items-center">
+        <div class="font-black text-2xl tracking-tight">BCP Support</div>
+        <button id="chat-minimize" class="ml-auto text-white/80 hover:text-white text-2xl leading-none">x</button>
+      </div>
+      <div id="chat-header-greeting" class="mt-8 transition-all duration-200">
+        <p class="text-slate-300 text-4xl font-bold leading-tight">Hi there</p>
+        <p class="text-white text-5xl font-black leading-tight">How can we help?</p>
+      </div>
+    </div>
+
+    <div class="flex-1 bg-gradient-to-b from-slate-100/30 to-white overflow-y-auto">
+      <div id="chat-home-view" class="p-4 space-y-4">
+        <button id="go-messages-btn" class="w-full bg-white rounded-2xl p-4 border border-slate-200 text-left hover:shadow-md transition-shadow">
+          <p class="font-black text-slate-900">Send us a message</p>
+          <p class="text-slate-500 text-sm">Talk directly with admin support</p>
+        </button>
+        <div class="bg-white rounded-2xl p-4 border border-slate-200">
+          <div class="flex items-center gap-2 bg-slate-100 rounded-xl px-3 py-2">
+            <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+            <input id="faq-search" type="text" placeholder="Search for help" class="w-full bg-transparent text-sm focus:outline-none">
+          </div>
+          <div id="home-help-topic-buttons" class="flex flex-wrap gap-2 mt-3">
+            <button class="home-help-topic px-2.5 py-1.5 rounded-full border border-slate-200 text-[11px] font-bold text-slate-600 hover:bg-slate-50" data-topic-key="packages" data-topic="package pricing">Packages</button>
+            <button class="home-help-topic px-2.5 py-1.5 rounded-full border border-slate-200 text-[11px] font-bold text-slate-600 hover:bg-slate-50" data-topic-key="booking" data-topic="book reservation">Booking</button>
+            <button class="home-help-topic px-2.5 py-1.5 rounded-full border border-slate-200 text-[11px] font-bold text-slate-600 hover:bg-slate-50" data-topic-key="payment" data-topic="payment gcash maya">Payment</button>
+            <button class="home-help-topic px-2.5 py-1.5 rounded-full border border-slate-200 text-[11px] font-bold text-slate-600 hover:bg-slate-50" data-topic-key="delivery" data-topic="delivery timeline">Delivery</button>
+            <button class="home-help-topic px-2.5 py-1.5 rounded-full border border-slate-200 text-[11px] font-bold text-slate-600 hover:bg-slate-50" data-topic-key="account" data-topic="account login dashboard">Account</button>
+          </div>
+          <div id="home-help-topic-results" class="space-y-2 mt-3"></div>
+          <div id="faq-list" class="mt-3 space-y-2"></div>
+        </div>
+      </div>
+
+      <div id="chat-messages-view" class="hidden h-full flex flex-col">
+        <div class="px-4 pt-4 pb-2 border-b border-slate-100 flex items-center gap-2">
+          <button id="chat-mode-ai" class="px-3 py-1.5 rounded-full bg-slate-900 text-white text-[11px] font-black uppercase tracking-wide">AI Assistant</button>
+          <button id="chat-mode-admin" class="px-3 py-1.5 rounded-full border border-slate-200 text-slate-700 text-[11px] font-black uppercase tracking-wide hover:bg-slate-50">Chat Admin</button>
+          <span id="ai-provider-badge" class="ml-auto px-2 py-1 rounded-full bg-slate-100 text-slate-600 text-[10px] font-bold uppercase tracking-wide">AI: Checking</span>
+        </div>
+        <div id="client-chat-messages" class="flex-1 overflow-y-auto p-4 bg-slate-50"></div>
+        <div id="client-chat-login-hint" class="hidden p-4 border-t border-slate-200 bg-amber-50">
+          <p class="text-sm text-slate-700 mb-2 font-semibold">Admin chat needs sign-in. You can still use AI Assistant here.</p>
+          <a href="login.html" class="inline-block px-3 py-2 rounded-lg bg-slate-900 text-white text-xs font-bold uppercase">Login for Admin Chat</a>
+        </div>
+        <div id="client-chat-input-wrap" class="p-3 border-t border-slate-200 flex gap-2 bg-white">
+          <input id="client-chat-input" type="text" placeholder="Write your message..." class="flex-1 px-3 py-2 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-slate-200">
+          <button id="client-chat-send" class="px-4 py-2 rounded-xl bg-slate-900 text-white text-xs font-black uppercase">Send</button>
+        </div>
+      </div>
+
+      <div id="chat-help-view" class="hidden p-4">
+        <div class="bg-white rounded-2xl p-4 border border-slate-200">
+          <p class="text-sm font-black text-slate-900 mb-3">Help Topics</p>
+          <div id="help-topic-buttons" class="flex flex-wrap gap-2 mb-3">
+            <button class="help-topic px-2.5 py-1.5 rounded-full border border-slate-200 text-[11px] font-bold text-slate-600 hover:bg-slate-50" data-topic-key="packages" data-topic="package pricing">Packages</button>
+            <button class="help-topic px-2.5 py-1.5 rounded-full border border-slate-200 text-[11px] font-bold text-slate-600 hover:bg-slate-50" data-topic-key="booking" data-topic="book reservation">Booking</button>
+            <button class="help-topic px-2.5 py-1.5 rounded-full border border-slate-200 text-[11px] font-bold text-slate-600 hover:bg-slate-50" data-topic-key="payment" data-topic="payment gcash maya">Payment</button>
+            <button class="help-topic px-2.5 py-1.5 rounded-full border border-slate-200 text-[11px] font-bold text-slate-600 hover:bg-slate-50" data-topic-key="delivery" data-topic="delivery timeline">Delivery</button>
+            <button class="help-topic px-2.5 py-1.5 rounded-full border border-slate-200 text-[11px] font-bold text-slate-600 hover:bg-slate-50" data-topic-key="account" data-topic="account login dashboard">Account</button>
+          </div>
+          <div id="help-topic-results" class="space-y-2 mb-3"></div>
+          <div id="faq-choice-buttons" class="flex flex-wrap gap-2 mb-3"></div>
+          <div id="faq-help-list" class="space-y-2"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-3 border-t border-slate-200 bg-white">
+      <button class="chat-nav-btn py-3 text-sm font-bold text-slate-900" data-view="home">Home</button>
+      <button class="chat-nav-btn py-3 text-sm font-bold text-slate-500" data-view="messages">Messages</button>
+      <button class="chat-nav-btn py-3 text-sm font-bold text-slate-500" data-view="help">Help</button>
+    </div>
+  </div>
+
+  <script src="api.js?v=20260230"></script>
+  <script>
+    const chatToggle = document.getElementById("chat-toggle");
+    const chatWindow = document.getElementById("chat-window");
+    const chatOpenIcon = document.getElementById("chat-open-icon");
+    const chatCloseIcon = document.getElementById("chat-close-icon");
+    const chatMinimize = document.getElementById("chat-minimize");
+    const faqSearch = document.getElementById("faq-search");
+    const faqList = document.getElementById("faq-list");
+    const homeHelpTopicButtons = document.querySelectorAll(".home-help-topic");
+    const homeHelpTopicResults = document.getElementById("home-help-topic-results");
+    const faqHelpList = document.getElementById("faq-help-list");
+    const faqChoiceButtons = document.getElementById("faq-choice-buttons");
+    const goMessagesBtn = document.getElementById("go-messages-btn");
+    const navButtons = document.querySelectorAll(".chat-nav-btn");
+    const chatHomeView = document.getElementById("chat-home-view");
+    const chatMessagesView = document.getElementById("chat-messages-view");
+    const chatHelpView = document.getElementById("chat-help-view");
+    const chatHeader = document.getElementById("chat-header");
+    const chatHeaderGreeting = document.getElementById("chat-header-greeting");
+    const clientChatMessages = document.getElementById("client-chat-messages");
+    const clientChatInput = document.getElementById("client-chat-input");
+    const clientChatSend = document.getElementById("client-chat-send");
+    const clientChatLoginHint = document.getElementById("client-chat-login-hint");
+    const clientChatInputWrap = document.getElementById("client-chat-input-wrap");
+    const defaultChatLoginHintHTML = clientChatLoginHint?.innerHTML || "";
+    const chatModeAiBtn = document.getElementById("chat-mode-ai");
+    const chatModeAdminBtn = document.getElementById("chat-mode-admin");
+    const aiProviderBadge = document.getElementById("ai-provider-badge");
+    const helpTopicButtons = document.querySelectorAll(".help-topic");
+    const helpTopicResults = document.getElementById("help-topic-results");
+    const desktopSignInLink = document.getElementById("desktop-signin-link");
+    const desktopDashboardLink = document.getElementById("desktop-dashboard-link");
+    const desktopAvatarImg = document.getElementById("desktop-avatar-img");
+    const desktopAvatarName = document.getElementById("desktop-avatar-name");
+    const mobileSignInLink = document.getElementById("mobile-signin-link");
+    const mobileDashboardLink = document.getElementById("mobile-dashboard-link");
+    const promoBannerWrap = document.getElementById("promo-banner-wrap");
+    const promoBannerLink = document.getElementById("promo-banner-link");
+    const promoBannerTitle = document.getElementById("promo-banner-title");
+    const promoBannerDescription = document.getElementById("promo-banner-description");
+    const homeStatHappyClients = document.getElementById("home-stat-happy-clients");
+    const homeStatSessionsCompleted = document.getElementById("home-stat-sessions-completed");
+    const homeStatPicturesDelivered = document.getElementById("home-stat-pictures-delivered");
+
+    const fallbackFaq = [
+      { question: "How much does a wedding package cost?", answer: "Pricing depends on coverage hours and outputs. Use Reservations for a custom quote." },
+      { question: "How can I book a session?", answer: "Create an account, submit reservation details, then wait for admin approval and quote." },
+      { question: "How long is delivery?", answer: "Delivery timelines are shown by admin in your reservation status." }
+    ];
+    const helpTopicMap = {
+      packages: [
+        { title: "Package Pricing", answer: "Basic PHP 2,700, Standard PHP 3,500, Premium PHP 4,500, plus custom package.", prompt: "What are your package prices?" },
+        { title: "Custom Package", answer: "You can submit your own package description in Reservation for a custom quote.", prompt: "How do I request a custom package?" }
+      ],
+      booking: [
+        { title: "How to Book", answer: "Open Reservation, complete event details, then submit for admin review.", prompt: "How do I book a reservation?" },
+        { title: "Approval Flow", answer: "After submission, admin approves/declines and may update pricing.", prompt: "What happens after I submit my reservation?" }
+      ],
+      payment: [
+        { title: "Payment Method", answer: "Manual proof payment is used. Upload reference number and proof screenshot.", prompt: "How do I submit payment proof?" },
+        { title: "Refund Request", answer: "Refund requests are available in payment records and reviewed by admin.", prompt: "How can I request a refund?" }
+      ],
+      delivery: [
+        { title: "Delivery Timeline", answer: "Estimated delivery is updated by admin in dashboard project status.", prompt: "How long is the delivery time?" },
+        { title: "Completion", answer: "You will be notified once project status is marked done.", prompt: "How do I know when my project is done?" }
+      ],
+      account: [
+        { title: "Login Access", answer: "Guests can use AI chat. Live admin chat requires sign-in.", prompt: "Do I need login to chat with admin?" },
+        { title: "Dashboard Access", answer: "Signed-in users use User Dashboard. Admin accounts use Admin Dashboard.", prompt: "Where do I access my dashboard?" }
+      ]
+    };
+
+    let faqItems = [];
+    let liveThreadId = null;
+    let livePollTimer = null;
+    let currentView = "home";
+    let currentChatMode = "ai";
+    let guestAdminFallbackNotified = false;
+    let chatCloseTimer = null;
+    const chatApi = (() => {
+      const hasApi = Boolean(window.API?.chatbot);
+      const hasNewMethods = Boolean(window.API?.chatbot?.getMyLiveThread && window.API?.chatbot?.sendLiveMessage && window.API?.chatbot?.listLiveMessages);
+      if (hasApi && hasNewMethods) return window.API.chatbot;
+
+      const base = window.API?.baseURL || `${window.location.origin}/api`;
+      const getToken = () => window.API?.getToken?.() || localStorage.getItem("token") || "";
+      const req = async (path, options = {}) => {
+        const response = await fetch(`${base}${path}`, {
+          ...options,
+          headers: {
+            "Content-Type": "application/json",
+            ...(getToken() ? { Authorization: `Bearer ${getToken()}` } : {}),
+            ...(options.headers || {})
+          }
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data?.message || `Request failed (${response.status})`);
+        return data;
+      };
+      const reqWithFallback = async (primaryPath, fallbackPath, options = {}) => {
+        try {
+          return await req(primaryPath, options);
+        } catch (error) {
+          if (/route not found/i.test(String(error?.message || "")) && fallbackPath) {
+            return req(fallbackPath, options);
+          }
+          throw error;
+        }
+      };
+      return {
+        listQA: () => (window.API?.chatbot?.listQA ? window.API.chatbot.listQA() : req("/chatbot/qa")),
+        askAI: (question) => (window.API?.chatbot?.askAI
+          ? window.API.chatbot.askAI(question)
+          : req("/chatbot/ai", { method: "POST", body: JSON.stringify({ question }) })),
+        getMyLiveThread: () => reqWithFallback("/chatbot/live/thread", "/chatbot/thread"),
+        listLiveMessages: (threadId) => reqWithFallback(`/chatbot/live/threads/${threadId}/messages`, `/chatbot/threads/${threadId}/messages`),
+        sendLiveMessage: (threadId, text) => reqWithFallback(
+          `/chatbot/live/threads/${threadId}/messages`,
+          `/chatbot/threads/${threadId}/messages`,
+          { method: "POST", body: JSON.stringify({ text }) }
+        )
+      };
+    })();
+
+    const escapeText = (value) => String(value || "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll("\"", "&quot;")
+      .replaceAll("'", "&#39;");
+
+    function openChat() {
+      if (chatCloseTimer) {
+        clearTimeout(chatCloseTimer);
+        chatCloseTimer = null;
+      }
+      chatWindow.classList.remove("hidden");
+      requestAnimationFrame(() => {
+        chatWindow.classList.remove("scale-95", "opacity-0");
+        chatWindow.classList.add("scale-100", "opacity-100");
+      });
+      chatOpenIcon.classList.add("hidden");
+      chatCloseIcon.classList.remove("hidden");
+      if (currentView === "messages") ensureLiveChatReady();
+    }
+
+    function closeChat() {
+      if (chatCloseTimer) {
+        clearTimeout(chatCloseTimer);
+        chatCloseTimer = null;
+      }
+      chatWindow.classList.add("scale-95", "opacity-0");
+      chatWindow.classList.remove("scale-100", "opacity-100");
+      chatCloseTimer = setTimeout(() => {
+        chatWindow.classList.add("hidden");
+        chatCloseTimer = null;
+      }, 300);
+      chatOpenIcon.classList.remove("hidden");
+      chatCloseIcon.classList.add("hidden");
+      stopLivePolling();
+    }
+
+    function toggleChat() {
+      if (chatWindow.classList.contains("hidden")) openChat();
+      else closeChat();
+    }
+
+    async function fetchCurrentUser() {
+      if (!window.API?.getToken?.()) return null;
+      try {
+        const response = await API.auth.me();
+        return response?.user || null;
+      } catch (_error) {
+        return null;
+      }
+    }
+
+    function getAvatarFallback(user) {
+      const name = String(user?.fullName || user?.email || "User").trim();
+      const seed = encodeURIComponent(name);
+      return `https://ui-avatars.com/api/?name=${seed}&background=1e3a8a&color=fff`;
+    }
+
+    function applyAuthNavState(user) {
+      const isLoggedIn = Boolean(user);
+      const isAdmin = user?.role === "admin";
+      const dashboardHref = isAdmin ? "admin_dashboard.html" : "dashboard.html";
+
+      desktopSignInLink?.classList.toggle("hidden", isLoggedIn);
+      desktopDashboardLink?.classList.toggle("hidden", !isLoggedIn);
+      desktopDashboardLink?.classList.toggle("inline-flex", isLoggedIn);
+      mobileSignInLink?.classList.toggle("hidden", isLoggedIn);
+      mobileDashboardLink?.classList.toggle("hidden", !isLoggedIn);
+      if (mobileDashboardLink) {
+        mobileDashboardLink.href = dashboardHref;
+      }
+
+      if (desktopDashboardLink) {
+        desktopDashboardLink.href = dashboardHref;
+      }
+      if (desktopAvatarImg) {
+        desktopAvatarImg.src = user?.avatarUrl || getAvatarFallback(user);
+      }
+      if (desktopAvatarName) {
+        desktopAvatarName.textContent = user?.fullName || (isAdmin ? "Admin Dashboard" : "Dashboard");
+      }
+    }
+
+    async function hydrateAuthNav() {
+      if (!window.API?.auth?.me) {
+        applyAuthNavState(null);
+        return;
+      }
+      const user = await fetchCurrentUser();
+      applyAuthNavState(user);
+    }
+
+    function renderPromoBanner(ad) {
+      if (!ad || !promoBannerWrap || !promoBannerLink || !promoBannerTitle || !promoBannerDescription) {
+        promoBannerWrap?.classList.add("hidden");
+        if (promoBannerWrap) {
+          promoBannerWrap.style.backgroundImage = "";
+        }
+        return;
+      }
+      const targetHref = String(ad.linkUrl || "").trim() || "#";
+      promoBannerLink.href = targetHref;
+      promoBannerTitle.textContent = ad.title || "Announcement";
+      promoBannerDescription.textContent = ad.description || "";
+      const imageUrl = String(ad.imageUrl || "").trim();
+      if (imageUrl) {
+        promoBannerWrap.style.backgroundImage =
+          `linear-gradient(var(--promo-overlay), var(--promo-overlay)), url('${imageUrl}')`;
+        promoBannerWrap.style.backgroundSize = "cover";
+        promoBannerWrap.style.backgroundPosition = "center";
+      } else {
+        promoBannerWrap.style.backgroundImage = "";
+      }
+      promoBannerWrap.classList.remove("hidden");
+    }
+
+    async function loadPromoBanner() {
+      const normalizeAds = (response) => (Array.isArray(response?.ads) ? response.ads : []);
+      const requestRaw = async (path) => {
+        const response = await fetch(`${window.location.origin}/api${path}`, { method: "GET" });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          throw new Error(data?.message || `Request failed (${response.status})`);
+        }
+        return data;
+      };
+
+      try {
+        let result = null;
+        if (window.API?.ads?.listActive) {
+          try {
+            result = await API.ads.listActive();
+          } catch (apiError) {
+            if (!/route not found/i.test(String(apiError?.message || ""))) {
+              throw apiError;
+            }
+          }
+        }
+
+        if (!result) {
+          try {
+            result = await requestRaw("/ads");
+          } catch (firstError) {
+            if (!/route not found/i.test(String(firstError?.message || ""))) throw firstError;
+            try {
+              result = await requestRaw("/advertisements");
+            } catch (secondError) {
+              if (!/route not found/i.test(String(secondError?.message || ""))) throw secondError;
+              result = await requestRaw("/adverts");
+            }
+          }
+        }
+
+        const activeAds = normalizeAds(result);
+        const ad = activeAds[0] || null;
+        if (ad) {
+          renderPromoBanner({
+            title: ad.title || "Announcement",
+            description: ad.description || "",
+            linkUrl: ad.linkUrl || ad.link || "#",
+            imageUrl: ad.imageUrl || ""
+          });
+          return;
+        }
+        renderPromoBanner(null);
+      } catch (_error) {
+        renderPromoBanner(null);
+      }
+    }
+
+    function formatStatCount(value) {
+      const safe = Number.isFinite(Number(value)) ? Number(value) : 0;
+      return safe.toLocaleString("en-US");
+    }
+
+    async function loadHomepageStats() {
+      if (!homeStatHappyClients || !homeStatSessionsCompleted || !homeStatPicturesDelivered) return;
+      try {
+        const response = window.API?.system?.stats
+          ? await API.system.stats()
+          : await fetch(`${window.location.origin}/api/system/stats`).then((res) => res.json());
+        const stats = response?.stats || {};
+        homeStatHappyClients.textContent = formatStatCount(stats.happyClients);
+        homeStatSessionsCompleted.textContent = formatStatCount(stats.sessionsCompleted);
+        homeStatPicturesDelivered.textContent = formatStatCount(stats.picturesDelivered);
+      } catch (_error) {
+        // Keep defaults if stats endpoint is unavailable.
+      }
+    }
+
+    async function loadFaq() {
+      try {
+        const response = await chatApi.listQA();
+        faqItems = (response?.items || []).map((item) => ({ question: item.question, answer: item.answer }));
+      } catch (_error) {
+        faqItems = fallbackFaq;
+      }
+      renderFaq(faqSearch.value);
+      renderHelpTopicResults(faqSearch.value);
+      renderHomeTopicResults(faqSearch.value);
+    }
+
+    function renderFaq(searchTerm = "") {
+      const needle = String(searchTerm || "").trim().toLowerCase();
+      const filtered = faqItems.filter((item) =>
+        item.question.toLowerCase().includes(needle) || item.answer.toLowerCase().includes(needle)
+      );
+      const html = filtered.map((item) => `
+        <div class="w-full text-left p-3 rounded-xl border border-slate-200 hover:border-slate-300 hover:bg-slate-50">
+          <p class="text-sm font-bold text-slate-900">${escapeText(item.question)}</p>
+          <p class="text-xs text-slate-500 mt-1">${escapeText(item.answer)}</p>
+        </div>
+      `).join("") || `<p class="text-xs text-slate-400">No results</p>`;
+      faqList.innerHTML = html;
+      faqHelpList.innerHTML = html;
+      if (faqChoiceButtons) {
+        faqChoiceButtons.innerHTML = faqItems.slice(0, 6).map((item) => `
+          <button class="faq-choice px-2.5 py-1.5 rounded-full border border-slate-200 text-[11px] font-bold text-slate-600 hover:bg-slate-50" data-question="${escapeText(item.question)}">
+            ${escapeText(item.question)}
+          </button>
+        `).join("");
+        faqChoiceButtons.querySelectorAll(".faq-choice").forEach((button) => {
+          button.addEventListener("click", () => {
+            clientChatInput.value = button.dataset.question || "";
+            switchView("messages");
+            if (chatWindow.classList.contains("hidden")) openChat();
+            setChatMode("ai");
+            sendClientMessage();
+          });
+        });
+      }
+    }
+
+    function renderHelpTopicResults(searchTerm = "", topicKey = "") {
+      if (!helpTopicResults) return;
+      const mapped = helpTopicMap[topicKey] || [];
+      if (mapped.length) {
+        helpTopicResults.innerHTML = mapped.map((item) => `
+          <button class="help-result w-full text-left p-3 rounded-xl border border-slate-200 hover:bg-slate-50" data-question="${escapeText(item.prompt || item.title)}">
+            <p class="text-xs font-bold text-slate-800">${escapeText(item.title)}</p>
+            <p class="text-[11px] text-slate-500 mt-1">${escapeText(item.answer)}</p>
+          </button>
+        `).join("");
+      } else {
+        const terms = String(searchTerm || "").trim().toLowerCase().split(/\s+/).filter(Boolean);
+        if (!terms.length) {
+          helpTopicResults.innerHTML = `<p class="text-[11px] text-slate-400">Choose a topic to see quick results.</p>`;
+          return;
+        }
+        const matches = faqItems.filter((item) => {
+          const question = String(item.question || "").toLowerCase();
+          const answer = String(item.answer || "").toLowerCase();
+          return terms.some((term) => question.includes(term) || answer.includes(term));
+        }).slice(0, 3);
+        if (!matches.length) {
+          helpTopicResults.innerHTML = `<p class="text-[11px] text-slate-400">No quick results for this topic.</p>`;
+          return;
+        }
+        helpTopicResults.innerHTML = matches.map((item) => `
+          <button class="help-result w-full text-left p-3 rounded-xl border border-slate-200 hover:bg-slate-50" data-question="${escapeText(item.question)}">
+            <p class="text-xs font-bold text-slate-800">${escapeText(item.question)}</p>
+            <p class="text-[11px] text-slate-500 mt-1">${escapeText(item.answer)}</p>
+          </button>
+        `).join("");
+      }
+      helpTopicResults.querySelectorAll(".help-result").forEach((button) => {
+        button.addEventListener("click", () => {
+          clientChatInput.value = button.dataset.question || "";
+          switchView("messages");
+          if (chatWindow.classList.contains("hidden")) openChat();
+          setChatMode("ai");
+          sendClientMessage();
+        });
+      });
+    }
+
+    function setActiveHelpTopic(activeKey) {
+      helpTopicButtons.forEach((button) => {
+        const isActive = (button.dataset.topicKey || "") === activeKey;
+        button.classList.toggle("bg-slate-900", isActive);
+        button.classList.toggle("text-white", isActive);
+        button.classList.toggle("border-slate-900", isActive);
+      });
+    }
+
+    function renderHomeTopicResults(searchTerm = "", topicKey = "") {
+      if (!homeHelpTopicResults) return;
+      const mapped = helpTopicMap[topicKey] || [];
+      if (mapped.length) {
+        homeHelpTopicResults.innerHTML = mapped.map((item) => `
+          <button class="home-help-result w-full text-left p-3 rounded-xl border border-slate-200 hover:bg-slate-50" data-question="${escapeText(item.prompt || item.title)}">
+            <p class="text-xs font-bold text-slate-800">${escapeText(item.title)}</p>
+            <p class="text-[11px] text-slate-500 mt-1">${escapeText(item.answer)}</p>
+          </button>
+        `).join("");
+      } else {
+        const terms = String(searchTerm || "").trim().toLowerCase().split(/\s+/).filter(Boolean);
+        const matches = faqItems.filter((item) => {
+          const q = String(item.question || "").toLowerCase();
+          const a = String(item.answer || "").toLowerCase();
+          return terms.some((term) => q.includes(term) || a.includes(term));
+        }).slice(0, 2);
+        homeHelpTopicResults.innerHTML = matches.map((item) => `
+          <button class="home-help-result w-full text-left p-3 rounded-xl border border-slate-200 hover:bg-slate-50" data-question="${escapeText(item.question)}">
+            <p class="text-xs font-bold text-slate-800">${escapeText(item.question)}</p>
+            <p class="text-[11px] text-slate-500 mt-1">${escapeText(item.answer)}</p>
+          </button>
+        `).join("");
+      }
+      homeHelpTopicResults.querySelectorAll(".home-help-result").forEach((button) => {
+        button.addEventListener("click", () => {
+          clientChatInput.value = button.dataset.question || "";
+          switchView("messages");
+          if (chatWindow.classList.contains("hidden")) openChat();
+          setChatMode("ai");
+          sendClientMessage();
+        });
+      });
+    }
+
+    function setChatMode(mode) {
+      currentChatMode = mode === "admin" ? "admin" : "ai";
+      guestAdminFallbackNotified = false;
+      const aiActive = currentChatMode === "ai";
+      chatModeAiBtn?.classList.toggle("bg-slate-900", aiActive);
+      chatModeAiBtn?.classList.toggle("text-white", aiActive);
+      chatModeAiBtn?.classList.toggle("border", !aiActive);
+      chatModeAiBtn?.classList.toggle("border-slate-200", !aiActive);
+      chatModeAiBtn?.classList.toggle("text-slate-700", !aiActive);
+
+      chatModeAdminBtn?.classList.toggle("bg-slate-900", !aiActive);
+      chatModeAdminBtn?.classList.toggle("text-white", !aiActive);
+      chatModeAdminBtn?.classList.toggle("border", aiActive);
+      chatModeAdminBtn?.classList.toggle("border-slate-200", aiActive);
+      chatModeAdminBtn?.classList.toggle("text-slate-700", aiActive);
+      ensureLiveChatReady();
+    }
+
+    function guessAiReply(text) {
+      const input = String(text || "").toLowerCase();
+      const matchedFaq = faqItems.find((item) =>
+        input.includes(String(item.question || "").toLowerCase()) ||
+        String(item.question || "").toLowerCase().includes(input)
+      );
+      if (matchedFaq?.answer) return matchedFaq.answer;
+      if (/price|cost|package|rate|budget/.test(input)) {
+        return "Our packages are: Basic PHP 2,700, Standard PHP 3,500, Premium PHP 4,500. You can also request a custom package.";
+      }
+      if (/book|reservation|reserve|schedule/.test(input)) {
+        return "Go to Reservation page, submit details, wait for admin approval, then proceed to payment once quoted.";
+      }
+      if (/payment|gcash|maya|pay/.test(input)) {
+        return "We currently use manual proof payment (GCash/Maya). Upload reference number and screenshot after admin quote approval.";
+      }
+      if (/delivery|download|release|ready/.test(input)) {
+        return "Delivery updates appear in your dashboard progress tracker. Admin marks bookings ready for download once complete.";
+      }
+      return "I can help with packages, reservations, payments, and delivery timelines. Ask me anything about those.";
+    }
+
+    function setAiProviderBadge(provider) {
+      if (!aiProviderBadge) return;
+      const normalized = String(provider || "checking").toLowerCase();
+      const isGemini = normalized === "gemini";
+      const label = isGemini ? "AI: Gemini" : normalized === "fallback" ? "AI: Fallback" : "AI: Checking";
+      aiProviderBadge.textContent = label;
+      aiProviderBadge.classList.remove("bg-slate-100", "text-slate-600", "bg-emerald-100", "text-emerald-700", "bg-amber-100", "text-amber-700");
+      if (isGemini) {
+        aiProviderBadge.classList.add("bg-emerald-100", "text-emerald-700");
+      } else if (normalized === "fallback") {
+        aiProviderBadge.classList.add("bg-amber-100", "text-amber-700");
+      } else {
+        aiProviderBadge.classList.add("bg-slate-100", "text-slate-600");
+      }
+    }
+
+    async function getAiReply(text) {
+      try {
+        const response = await chatApi.askAI(text);
+        const answer = String(response?.answer || "").trim();
+        if (answer) {
+          setAiProviderBadge(response?.provider || "fallback");
+          if (aiProviderBadge && response?.reason) {
+            aiProviderBadge.title = String(response.reason);
+          } else if (aiProviderBadge) {
+            aiProviderBadge.title = "";
+          }
+          return answer;
+        }
+      } catch (_error) {
+        // Fall through to local fallback.
+      }
+      setAiProviderBadge("fallback");
+      if (aiProviderBadge) {
+        aiProviderBadge.title = "AI endpoint unreachable";
+      }
+      return guessAiReply(text);
+    }
+
+    function appendAiMessage(text, mine) {
+      const time = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+      clientChatMessages.insertAdjacentHTML("beforeend", `
+        <div class="flex ${mine ? "justify-end" : "justify-start"} mb-3">
+          <div class="${mine ? "bg-slate-900 text-white" : "bg-white border border-slate-200 text-slate-800"} max-w-[80%] rounded-2xl ${mine ? "rounded-br-none" : "rounded-bl-none"} px-3 py-2 shadow-sm">
+            <p class="text-sm leading-relaxed">${escapeText(text)}</p>
+            <p class="text-[10px] mt-1 ${mine ? "text-slate-200" : "text-slate-400"}">${escapeText(time)}</p>
+          </div>
+        </div>
+      `);
+      clientChatMessages.scrollTop = clientChatMessages.scrollHeight;
+    }
+
+    function switchView(view) {
+      currentView = view;
+      chatHomeView.classList.toggle("hidden", view !== "home");
+      chatMessagesView.classList.toggle("hidden", view !== "messages");
+      chatHelpView.classList.toggle("hidden", view !== "help");
+      const compactHeader = view === "messages";
+      chatHeader?.classList.toggle("pt-5", !compactHeader);
+      chatHeader?.classList.toggle("pb-6", !compactHeader);
+      chatHeader?.classList.toggle("py-3", compactHeader);
+      chatHeaderGreeting?.classList.toggle("hidden", compactHeader);
+      navButtons.forEach((btn) => {
+        const active = btn.dataset.view === view;
+        btn.classList.toggle("text-slate-900", active);
+        btn.classList.toggle("text-slate-500", !active);
+      });
+      if (view === "messages") ensureLiveChatReady();
+      else stopLivePolling();
+    }
+
+    function stopLivePolling() {
+      if (livePollTimer) {
+        clearInterval(livePollTimer);
+        livePollTimer = null;
+      }
+    }
+
+    function startLivePolling() {
+      stopLivePolling();
+      livePollTimer = setInterval(async () => {
+        if (currentView !== "messages" || chatWindow.classList.contains("hidden")) return;
+        await loadLiveMessages();
+      }, 3000);
+    }
+
+    function renderClientMessages(messages) {
+      if (!messages.length) {
+        clientChatMessages.innerHTML = `<div class="h-full flex items-center justify-center text-slate-400 text-xs font-bold uppercase">No messages yet</div>`;
+        return;
+      }
+      clientChatMessages.innerHTML = messages.map((message) => {
+        const mine = message.senderRole !== "admin";
+        const time = new Date(message.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+        return `
+          <div class="flex ${mine ? "justify-end" : "justify-start"} mb-3">
+            <div class="${mine ? "bg-slate-900 text-white" : "bg-white border border-slate-200 text-slate-800"} max-w-[80%] rounded-2xl ${mine ? "rounded-br-none" : "rounded-bl-none"} px-3 py-2 shadow-sm">
+              <p class="text-sm leading-relaxed">${escapeText(message.text)}</p>
+              <p class="text-[10px] mt-1 ${mine ? "text-slate-200" : "text-slate-400"}">${escapeText(time)}</p>
+            </div>
+          </div>
+        `;
+      }).join("");
+      clientChatMessages.scrollTop = clientChatMessages.scrollHeight;
+    }
+
+    async function loadLiveMessages() {
+      if (!liveThreadId) return;
+      const response = await chatApi.listLiveMessages(liveThreadId);
+      renderClientMessages(response?.messages || []);
+      const closed = response?.thread?.status === "closed";
+      clientChatInput.disabled = closed;
+      clientChatSend.disabled = closed;
+      clientChatInput.placeholder = closed ? "This chat has been closed by admin." : "Write your message...";
+    }
+
+    async function ensureLiveChatReady() {
+      if (clientChatLoginHint) {
+        clientChatLoginHint.innerHTML = defaultChatLoginHintHTML;
+      }
+      if (currentChatMode === "ai") {
+        clientChatLoginHint.classList.add("hidden");
+        clientChatInputWrap.classList.remove("hidden");
+        clientChatInput.disabled = false;
+        clientChatSend.disabled = false;
+        if (!clientChatMessages.children.length) {
+          clientChatMessages.innerHTML = `<div class="h-full flex items-center justify-center text-slate-400 text-xs font-bold uppercase">AI assistant ready</div>`;
+        }
+        stopLivePolling();
+        return;
+      }
+      const user = await fetchCurrentUser();
+      if (!user) {
+        setChatMode("ai");
+        clientChatLoginHint.classList.remove("hidden");
+        clientChatInputWrap.classList.remove("hidden");
+        clientChatInput.disabled = false;
+        clientChatSend.disabled = false;
+        if (!guestAdminFallbackNotified) {
+          appendAiMessage("Guest mode: AI Assistant is available. Login if you want live chat with admin.", false);
+          guestAdminFallbackNotified = true;
+        }
+        return;
+      }
+      if (user.role === "admin") {
+        clientChatLoginHint.classList.remove("hidden");
+        clientChatLoginHint.innerHTML = `<p class="text-sm text-slate-600 mb-2">Use Admin Dashboard for live support.</p><a href="admin_dashboard.html" class="inline-block px-3 py-2 rounded-lg bg-slate-900 text-white text-xs font-bold uppercase">Open Dashboard</a>`;
+        clientChatInputWrap.classList.add("hidden");
+        clientChatMessages.innerHTML = `<div class="h-full flex items-center justify-center text-slate-400 text-xs font-bold uppercase">Admin account detected</div>`;
+        return;
+      }
+
+      clientChatLoginHint.classList.add("hidden");
+      clientChatInputWrap.classList.remove("hidden");
+      if (!liveThreadId) {
+        const threadRes = await chatApi.getMyLiveThread();
+        liveThreadId = threadRes?.thread?._id || null;
+      }
+      if (liveThreadId) {
+        await loadLiveMessages();
+        startLivePolling();
+      }
+    }
+
+    async function sendClientMessage() {
+      const text = String(clientChatInput.value || "").trim();
+      if (!text) return;
+      const originalText = text;
+      clientChatInput.value = "";
+      if (currentChatMode === "ai") {
+        appendAiMessage(originalText, true);
+        appendAiMessage("Thinking...", false);
+        const loadingBubble = clientChatMessages.lastElementChild;
+        const aiReply = await getAiReply(originalText);
+        if (loadingBubble) {
+          loadingBubble.remove();
+        }
+        appendAiMessage(aiReply, false);
+        return;
+      }
+      try {
+        if (!liveThreadId) {
+          await ensureLiveChatReady();
+        }
+        if (!liveThreadId) {
+          throw new Error("Please login first to start live chat.");
+        }
+        await chatApi.sendLiveMessage(liveThreadId, originalText);
+        await loadLiveMessages();
+      } catch (error) {
+        clientChatInput.value = originalText;
+        clientChatMessages.insertAdjacentHTML("beforeend", `<p class="text-xs text-red-600">${escapeText(error?.message || "Failed to send message.")}</p>`);
+      }
+    }
+
+    chatToggle.addEventListener("click", toggleChat);
+    chatMinimize.addEventListener("click", closeChat);
+    goMessagesBtn.addEventListener("click", () => switchView("messages"));
+    navButtons.forEach((btn) => btn.addEventListener("click", () => switchView(btn.dataset.view)));
+    helpTopicButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        const topic = button.dataset.topic || "";
+        const topicKey = button.dataset.topicKey || "";
+        setActiveHelpTopic(topicKey);
+        faqSearch.value = topic;
+        renderFaq(topic);
+        renderHelpTopicResults(topic, topicKey);
+      });
+    });
+    homeHelpTopicButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        const topic = button.dataset.topic || "";
+        const topicKey = button.dataset.topicKey || "";
+        faqSearch.value = topic;
+        renderFaq(topic);
+        renderHelpTopicResults(topic);
+        renderHomeTopicResults(topic, topicKey);
+      });
+    });
+    chatModeAiBtn?.addEventListener("click", () => setChatMode("ai"));
+    chatModeAdminBtn?.addEventListener("click", () => setChatMode("admin"));
+    clientChatSend.addEventListener("click", sendClientMessage);
+    clientChatInput.addEventListener("keypress", (event) => {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        sendClientMessage();
+      }
+    });
+    faqSearch.addEventListener("input", () => {
+      setActiveHelpTopic("");
+      renderFaq(faqSearch.value);
+      renderHelpTopicResults(faqSearch.value);
+      renderHomeTopicResults(faqSearch.value);
+    });
+
+    loadFaq();
+    setActiveHelpTopic("");
+    setAiProviderBadge("checking");
+    renderHelpTopicResults("");
+    renderHomeTopicResults("");
+    hydrateAuthNav();
+    loadPromoBanner();
+    loadHomepageStats();
+  </script>
+
+  <script>
+
+    // Mobile Menu Toggle
+    function setMobileMenuState(open) {
+      const mobileMenu = document.getElementById('mobile-menu');
+      const hamburgerIcon = document.getElementById('hamburger-icon');
+      const closeIcon = document.getElementById('close-icon');
+      if (!mobileMenu || !hamburgerIcon || !closeIcon) return;
+      mobileMenu.classList.toggle('active', open);
+      hamburgerIcon.classList.toggle('hidden', open);
+      closeIcon.classList.toggle('hidden', open);
+      document.body.style.overflow = open ? 'hidden' : '';
+    }
+
+    function toggleMobileMenu() {
+      const mobileMenu = document.getElementById('mobile-menu');
+      if (!mobileMenu) return;
+      setMobileMenuState(!mobileMenu.classList.contains('active'));
+    }
+
+    // Close menu when pressing escape key
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        const mobileMenu = document.getElementById('mobile-menu');
+        if (mobileMenu && mobileMenu.classList.contains('active')) {
+          setMobileMenuState(false);
+        }
+      }
+    });
+
+    // Always release scroll lock when switching to desktop view.
+    window.addEventListener('resize', () => {
+      if (window.innerWidth >= 768) {
+        setMobileMenuState(false);
+      }
+    });
+  </script>
+  <script>
+    (() => {
+      const track = document.getElementById("samples-track");
+      const prevBtn = document.getElementById("samples-prev");
+      const nextBtn = document.getElementById("samples-next");
+      const dotsWrap = document.getElementById("samples-dots");
+      if (!track || !prevBtn || !nextBtn || !dotsWrap) return;
+
+      const slides = Array.from(track.children);
+      if (!slides.length) return;
+
+      const getStep = () => {
+        const first = slides[0];
+        const style = window.getComputedStyle(track);
+        const gap = parseFloat(style.columnGap || style.gap || "0");
+        return first.getBoundingClientRect().width + gap;
+      };
+
+      const updateNavState = () => {
+        const maxScroll = track.scrollWidth - track.clientWidth - 2;
+        prevBtn.disabled = track.scrollLeft <= 2;
+        nextBtn.disabled = track.scrollLeft >= maxScroll;
+      };
+
+      const updateDots = () => {
+        const step = getStep();
+        const index = Math.round(track.scrollLeft / step);
+        dotsWrap.querySelectorAll("button").forEach((dot, dotIndex) => {
+          const active = dotIndex === index;
+          dot.classList.toggle("bg-white", active);
+          dot.classList.toggle("w-6", active);
+          dot.classList.toggle("bg-white/35", !active);
+          dot.classList.toggle("w-2.5", !active);
+        });
+        updateNavState();
+      };
+
+      slides.forEach((_slide, index) => {
+        const dot = document.createElement("button");
+        dot.type = "button";
+        dot.className = `h-2.5 rounded-full transition-all duration-300 ${index === 0 ? "bg-white w-6" : "bg-white/35 w-2.5"}`;
+        dot.setAttribute("aria-label", `Go to slide ${index + 1}`);
+        dot.addEventListener("click", () => {
+          track.scrollTo({ left: getStep() * index, behavior: "smooth" });
+        });
+        dotsWrap.appendChild(dot);
+      });
+
+      prevBtn.addEventListener("click", () => {
+        track.scrollBy({ left: -getStep(), behavior: "smooth" });
+      });
+      nextBtn.addEventListener("click", () => {
+        track.scrollBy({ left: getStep(), behavior: "smooth" });
+      });
+
+      track.addEventListener("scroll", updateDots, { passive: true });
+      window.addEventListener("resize", updateDots);
+      updateDots();
+      updateNavState();
+    })();
+  </script>
+  <script>
+    (() => {
+      const contactForm = document.getElementById("contactForm");
+      if (!contactForm) return;
+
+      const contactFields = Array.from(contactForm.querySelectorAll("input[name], textarea[name]"));
+
+      const invalidClasses = ["border-red-500", "bg-red-50", "focus:ring-red-400"];
+      const validClasses = ["border-emerald-500", "bg-emerald-50", "focus:ring-emerald-400"];
+      const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+      let toastContainer = document.getElementById("contact-toast-container");
+      if (!toastContainer) {
+        toastContainer = document.createElement("div");
+        toastContainer.id = "contact-toast-container";
+        toastContainer.className = "fixed top-4 left-1/2 -translate-x-1/2 z-[120] flex flex-col items-center gap-2 pointer-events-none";
+        document.body.appendChild(toastContainer);
+      }
+
+      const getFieldError = (field) => {
+        const name = field.name;
+        const value = String(field.value || "").trim();
+
+        if (name === "name") {
+          if (!value) return "Name is required.";
+          if (value.length < 2) return "Name is too short.";
+        }
+        if (name === "email") {
+          if (!value) return "Email is required.";
+          if (!emailPattern.test(value)) return "Email format is invalid.";
+        }
+        if (name === "subject") {
+          if (!value) return "Subject is required.";
+          if (value.length < 3) return "Subject is too short.";
+        }
+        if (name === "message") {
+          if (!value) return "Message is required.";
+          if (value.length < 10) return "Message is too short.";
+        }
+        return "";
+      };
+
+      const resetFieldState = (field) => {
+        field.classList.remove(...invalidClasses, ...validClasses);
+      };
+
+      const applyFieldState = (field) => {
+        const error = getFieldError(field);
+        resetFieldState(field);
+        field.classList.add(...(error ? invalidClasses : validClasses));
+        return error;
+      };
+
+      const showToast = (message, variant = "error") => {
+        const toast = document.createElement("div");
+        const isSuccess = variant === "success";
+        toast.className = [
+          "pointer-events-auto",
+          "min-w-[250px]",
+          "max-w-[92vw]",
+          "px-4",
+          "py-3",
+          "rounded-xl",
+          "shadow-lg",
+          "text-sm",
+          "font-bold",
+          "text-white",
+          "translate-y-2",
+          "opacity-0",
+          "transition-all",
+          "duration-200",
+          isSuccess ? "bg-emerald-600" : "bg-red-600"
+        ].join(" ");
+        toast.textContent = message;
+        toastContainer.appendChild(toast);
+        requestAnimationFrame(() => {
+          toast.classList.remove("translate-y-2", "opacity-0");
+        });
+        setTimeout(() => {
+          toast.classList.add("translate-y-2", "opacity-0");
+          setTimeout(() => toast.remove(), 220);
+        }, 2600);
+      };
+
+      contactFields.forEach((field) => {
+        field.addEventListener("input", () => {
+          if (!String(field.value || "").trim()) {
+            resetFieldState(field);
+            return;
+          }
+          applyFieldState(field);
+        });
+        field.addEventListener("blur", () => {
+          applyFieldState(field);
+        });
+      });
+
+      contactForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const firstErrorField = contactFields.find((field) => applyFieldState(field));
+        if (firstErrorField) {
+          firstErrorField.focus();
+          showToast("Please fix the highlighted contact fields.", "error");
+          return;
+        }
+
+        const submitBtn = contactForm.querySelector('button[type="submit"]');
+        if (submitBtn) {
+          submitBtn.disabled = true;
+          submitBtn.textContent = "Sending...";
+        }
+
+        const payload = {
+          name: String(contactForm.elements.name?.value || "").trim(),
+          email: String(contactForm.elements.email?.value || "").trim(),
+          subject: String(contactForm.elements.subject?.value || "").trim(),
+          message: String(contactForm.elements.message?.value || "").trim()
+        };
+
+        try {
+          if (window.API?.contact?.create) {
+            await API.contact.create(payload);
+          } else {
+            const base = `${window.location.protocol}//${window.location.hostname}:5000/api`;
+            const response = await fetch(`${base}/contact`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(payload)
+            });
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok) {
+              throw new Error(data?.message || "Failed to send message.");
+            }
+          }
+          showToast("Message sent successfully. We will contact you soon.", "success");
+          contactForm.reset();
+          contactFields.forEach((field) => resetFieldState(field));
+        } catch (error) {
+          showToast(error?.message || "Failed to send message. Please try again.", "error");
+        } finally {
+          if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.textContent = "Send Message";
+          }
+        }
+      });
+    })();
+  </script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+

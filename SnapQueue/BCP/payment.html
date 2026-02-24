@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <link rel="icon" type="image/png" href="/favicon.png?v=2">
+  <link rel="icon" href="/favicon.ico?v=2" type="image/x-icon">
+  <link rel="shortcut icon" href="/favicon.ico?v=2" type="image/x-icon">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <title>Payment | SnapQueue</title>
+    <style>
+        .card-elevated { background: white; border: 1px solid #e5e7eb; border-radius: 1rem; }
+        .payment-option input:checked + div { border-color: #3b82f6; background-color: #eff6ff; }
+        .hidden { display: none; }
+        .touch-manipulation { touch-action: manipulation; }
+        @media print {
+            body { background: #fff !important; }
+            body * { visibility: hidden; }
+            #receipt-card, #receipt-card * { visibility: visible; }
+            #receipt-card {
+                display: block !important;
+                position: absolute;
+                inset: 0;
+                margin: 0;
+                box-shadow: none !important;
+                border: 1px solid #e5e7eb !important;
+            }
+            #receipt-card button { display: none !important; }
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-slate-50 flex items-center justify-center p-4 md:p-6">
+
+    <div class="w-full md:max-w-md">
+        <div class="text-center mb-6 md:mb-8">
+            <h1 class="text-xl md:text-2xl font-bold text-slate-900">Finalize Reservation</h1>
+            <p class="text-slate-500 text-xs md:text-sm mt-2">Submit your payment proof for admin verification (GCash / Maya).</p>
+        </div>
+
+        <div class="card-elevated shadow-xl overflow-hidden">
+            <div class="bg-slate-900 p-4 md:p-6 text-white">
+                <div class="flex justify-between items-center">
+                    <span class="text-slate-400 text-[10px] md:text-xs font-bold uppercase tracking-widest">Total Amount</span>
+                    <span class="bg-blue-500 text-[10px] md:text-xs px-2 py-1 rounded font-bold">RESERVATION FEE</span>
+                </div>
+                <div id="display-price" class="text-3xl md:text-4xl font-black mt-2 md:mt-3">PHP 0.00</div>
+            </div>
+
+            <div id="selection-screen" class="p-4 md:p-6">
+                <h3 class="text-xs md:text-sm font-bold text-slate-700 mb-4 uppercase tracking-wider">Choose Payment Method</h3>
+                <div class="space-y-3">
+                    <label class="payment-option cursor-pointer">
+                        <input type="radio" name="method" value="gcash" class="hidden" onchange="showQR('GCash')">
+                        <div class="border-2 border-slate-100 p-3 md:p-4 rounded-xl flex items-center justify-between hover:border-blue-200 transition-all touch-manipulation active:bg-blue-50">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold italic text-sm md:text-base">G</div>
+                                <span class="font-bold text-slate-700 text-sm md:text-base">GCash</span>
+                            </div>
+                            <i data-lucide="chevron-right" class="w-4 h-4 text-slate-400"></i>
+                        </div>
+                    </label>
+
+                    <label class="payment-option cursor-pointer">
+                        <input type="radio" name="method" value="maya" class="hidden" onchange="showQR('Maya')">
+                        <div class="border-2 border-slate-100 p-3 md:p-4 rounded-xl flex items-center justify-between hover:border-green-200 transition-all touch-manipulation active:bg-green-50">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center text-white font-bold text-sm md:text-base">M</div>
+                                <span class="font-bold text-slate-700 text-sm md:text-base">Maya</span>
+                            </div>
+                            <i data-lucide="chevron-right" class="w-4 h-4 text-slate-400"></i>
+                        </div>
+                    </label>
+                </div>
+            </div>
+
+            <div id="qr-screen" class="p-4 md:p-6 hidden">
+                <button onclick="goBack()" class="flex items-center gap-1 text-[10px] md:text-xs font-bold text-slate-400 hover:text-slate-600 mb-4 uppercase touch-manipulation">
+                    <i data-lucide="arrow-left" class="w-3 h-3"></i> Change Method
+                </button>
+                <div class="text-center mb-6">
+                    <h3 id="method-title" class="text-base md:text-lg font-bold text-slate-900">Pay via GCash</h3>
+                    <p class="text-[11px] md:text-xs text-slate-500 mt-1">Transfer to the selected wallet, then upload your proof below.</p>
+                </div>
+                <div id="qr-wallet-card" class="bg-white border border-slate-200 rounded-2xl p-4 mb-4">
+                    <p class="text-[10px] font-black uppercase tracking-wide text-slate-500 mb-2">Scan QR Code</p>
+                    <div class="flex flex-col items-center gap-3">
+                        <img id="payment-qr-image" alt="Payment QR Code" class="w-52 h-52 object-contain rounded-xl border border-slate-200 bg-slate-50 p-2" />
+                        <div class="text-center">
+                            <p id="payment-wallet-name" class="text-sm font-black text-slate-900">SnapQueue</p>
+                            <p id="payment-wallet-number" class="text-xs font-semibold text-slate-600">+639095339528</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-slate-100 rounded-2xl mb-6 p-4 border border-slate-200">
+                    <p class="text-[10px] font-black uppercase text-slate-500 mb-2">Reservation Payment</p>
+                    <p id="payment-summary" class="text-xs md:text-sm font-semibold text-slate-700 leading-relaxed">Loading reservation summary...</p>
+                    <div id="quote-breakdown" class="mt-3 hidden rounded-xl border border-slate-200 bg-white p-3">
+                        <p class="text-[10px] font-black uppercase tracking-wide text-slate-500 mb-2">Quote Breakdown</p>
+                        <div id="quote-breakdown-lines" class="space-y-1 text-[11px] text-slate-700"></div>
+                    </div>
+                </div>
+                <div class="space-y-4">
+                    <div>
+                        <label for="reference-number" class="text-[10px] md:text-xs font-bold uppercase tracking-wide text-slate-600">Reference Number</label>
+                        <input id="reference-number" type="text" placeholder="e.g. 1234567890" class="mt-2 w-full px-3 py-2 border border-slate-300 rounded-lg text-sm font-semibold text-slate-700">
+                    </div>
+                    <label class="block">
+                        <span class="text-[10px] md:text-xs font-bold uppercase tracking-wide text-slate-600">Upload Proof of Payment</span>
+                        <div class="mt-2">
+                            <input type="file" id="proof-upload" accept="image/*" class="hidden" onchange="handleFile(this)">
+                            <button type="button" onclick="document.getElementById('proof-upload').click()" class="w-full py-3 border-2 border-dashed border-blue-200 bg-blue-50 rounded-xl flex flex-col items-center justify-center hover:bg-blue-100 transition-colors">
+                                <i data-lucide="upload-cloud" class="w-5 h-5 text-blue-600"></i>
+                                <span id="file-name" class="text-xs font-bold text-blue-700 mt-1">Click to upload screenshot</span>
+                            </button>
+                        </div>
+                    </label>
+                    <button id="submit-btn" onclick="processPayment()" class="w-full py-4 md:py-3 bg-blue-600 text-white font-bold rounded-xl transition-all uppercase tracking-wide text-xs md:text-sm touch-manipulation hover:bg-blue-700 active:bg-blue-800 shadow-lg">
+                        Submit Payment Proof
+                    </button>
+                    <p class="text-[10px] text-slate-400 font-semibold">Manual verification only. Keep your transfer screenshot and reference number.</p>
+                </div>
+            </div>
+        </div>
+        <div id="receipt-card" class="hidden card-elevated shadow-xl p-5 md:p-6 mt-4">
+            <div class="flex items-center gap-3 border-b border-slate-200 pb-3 mb-4">
+                <img src="bien-removebg.png" alt="SnapQueue logo" class="w-10 h-10 object-contain">
+                <div>
+                    <p class="text-base font-black text-slate-900">SnapQueue Official Receipt</p>
+                    <p class="text-[11px] text-slate-500 font-bold uppercase">Payment Verified</p>
+                </div>
+            </div>
+            <div id="receipt-content" class="space-y-2 text-xs md:text-sm text-slate-700"></div>
+            <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <button onclick="printReceipt()" class="w-full py-3 bg-slate-900 text-white rounded-xl text-xs md:text-sm font-black uppercase hover:bg-slate-800">
+                    Print Receipt
+                </button>
+                <button onclick="saveReceiptAsImage()" class="w-full py-3 border border-slate-300 bg-white text-slate-700 rounded-xl text-xs md:text-sm font-black uppercase hover:bg-slate-100">
+                    Save as Image
+                </button>
+            </div>
+        </div>
+        <p class="text-center text-[9px] md:text-[10px] text-slate-400 mt-6 uppercase font-bold tracking-widest">Secure Encrypted Transaction</p>
+    </div>
+
+    <script src="api.js?v=20260233"></script>
+    <script>
+        lucide.createIcons();
+        let selectedMethod = "";
+        let latestReservation = null;
+        let uploadedProofDataUrl = "";
+        let latestReceiptSnapshot = null;
+        let toastContainer = document.getElementById("contact-toast-container");
+        if (!toastContainer) {
+            toastContainer = document.createElement("div");
+            toastContainer.id = "contact-toast-container";
+            toastContainer.className = "fixed top-4 left-1/2 -translate-x-1/2 z-[120] flex flex-col items-center gap-2 pointer-events-none";
+            document.body.appendChild(toastContainer);
+        }
+        const formatPHP = (value) => new Intl.NumberFormat('en-PH', {
+            style: 'currency',
+            currency: 'PHP',
+            minimumFractionDigits: 2
+        }).format(Number(value || 0));
+        const PACKAGE_CATALOG = {
+            basic: { name: "Basic", inclusions: "Softcopy only", price: 2700 },
+            standard: { name: "Standard", inclusions: "Softcopy + Hardcopy", price: 3500 },
+            premium: { name: "Premium", inclusions: "Softcopy + Hardcopy + Video", price: 4500 }
+        };
+        const PAYMENT_QR = {
+            gcash: {
+                label: "GCash",
+                accountName: "SnapQueue",
+                accountNumber: "+639095339528"
+            },
+            maya: {
+                label: "Maya",
+                accountName: "SnapQueue",
+                accountNumber: "+639095339528"
+            }
+        };
+
+        function escapeHtml(value) {
+            return String(value || "")
+                .replaceAll("&", "&amp;")
+                .replaceAll("<", "&lt;")
+                .replaceAll(">", "&gt;")
+                .replaceAll('"', "&quot;")
+                .replaceAll("'", "&#39;");
+        }
+
+        function getPackageMetaFromReservation(reservation) {
+            const rawName = String(reservation?.packageName || reservation?.package || reservation?.service || "").trim();
+            const normalized = rawName.toLowerCase();
+            const mapped = PACKAGE_CATALOG[normalized] || null;
+            const isCustom = normalized === "custom";
+            const fallbackPrice = Number.isFinite(Number(mapped?.price)) ? Number(mapped.price) : 0;
+            const reservationPrice = Number(reservation?.packagePrice);
+            const finalPrice = Number(reservation?.finalPrice);
+            const selectedPrice = Number.isFinite(finalPrice) && finalPrice > 0
+                ? finalPrice
+                : (Number.isFinite(reservationPrice) && reservationPrice > 0 ? reservationPrice : fallbackPrice);
+            const customDescription = String(reservation?.packageCustomDescription || "").trim();
+            return {
+                packageName: isCustom
+                    ? "Custom"
+                    : (mapped?.name || (rawName ? rawName.charAt(0).toUpperCase() + rawName.slice(1) : "Package")),
+                inclusions: isCustom
+                    ? (customDescription || "Custom package inclusions")
+                    : (String(reservation?.packageInclusions || "").trim() || mapped?.inclusions || "Inclusions unavailable"),
+                price: selectedPrice
+            };
+        }
+
+        function renderPaymentQr(method) {
+            const normalizedMethod = String(method || "").toLowerCase();
+            const wallet = PAYMENT_QR[normalizedMethod] || PAYMENT_QR.gcash;
+            const qrImage = document.getElementById("payment-qr-image");
+            const walletName = document.getElementById("payment-wallet-name");
+            const walletNumber = document.getElementById("payment-wallet-number");
+            if (!qrImage || !walletName || !walletNumber) return;
+            const qrPayload = `${wallet.label}|${wallet.accountName}|${wallet.accountNumber}`;
+            const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=${encodeURIComponent(qrPayload)}`;
+            qrImage.src = qrUrl;
+            qrImage.onerror = () => {
+                qrImage.removeAttribute("src");
+                qrImage.alt = "QR image unavailable";
+            };
+            walletName.textContent = `${wallet.label} - ${wallet.accountName}`;
+            walletNumber.textContent = wallet.accountNumber;
+        }
+
+        function showToast(message, type = "error") {
+            const toast = document.createElement("div");
+            const isSuccess = type === "success";
+            toast.className = [
+                "pointer-events-auto",
+                "min-w-[250px]",
+                "max-w-[92vw]",
+                "px-4",
+                "py-3",
+                "rounded-xl",
+                "shadow-lg",
+                "text-sm",
+                "font-bold",
+                "text-white",
+                "translate-y-2",
+                "opacity-0",
+                "transition-all",
+                "duration-200",
+                isSuccess ? "bg-emerald-600" : "bg-red-600"
+            ].join(" ");
+            toast.textContent = message;
+            toastContainer.appendChild(toast);
+            requestAnimationFrame(() => {
+                toast.classList.remove("translate-y-2", "opacity-0");
+            });
+            setTimeout(() => {
+                toast.classList.add("translate-y-2", "opacity-0");
+                setTimeout(() => toast.remove(), 220);
+            }, 2600);
+        }
+
+        const pageParams = new URLSearchParams(window.location.search);
+        const reservationIdFromQuery = pageParams.get("reservationId") || "";
+        const paymentResult = pageParams.get("payment");
+
+        async function loadReservationForPayment() {
+            if (!window.API?.reservations?.getById) return null;
+            if (reservationIdFromQuery) {
+                const response = await API.reservations.getById(reservationIdFromQuery);
+                return response?.reservation || null;
+            }
+            const listed = await API.reservations.list();
+            const reservations = Array.isArray(listed?.reservations) ? listed.reservations : [];
+            return reservations.find((item) => {
+                const status = String(item?.status || "").toLowerCase();
+                const pricingStatus = String(item?.pricingStatus || "").toLowerCase();
+                return !["rejected", "completed"].includes(status) && ["quoted", "accepted"].includes(pricingStatus);
+            }) || null;
+        }
+
+        function applyPriceFromReservation(reservation) {
+            if (!reservation) return;
+            latestReservation = reservation;
+            const packageMeta = getPackageMetaFromReservation(reservation);
+            if (reservation.paymentDeletedAt) {
+                showToast("Payment for this reservation was deleted and is locked.", "error");
+                const submitBtn = document.getElementById("submit-btn");
+                if (submitBtn) submitBtn.disabled = true;
+            }
+            const finalPrice = Number(packageMeta.price || 0);
+            document.getElementById("display-price").innerText = finalPrice > 0 ? formatPHP(finalPrice) : "PHP 0.00";
+            const summary = document.getElementById("payment-summary");
+            const eventLabel = String(reservation.eventType || "").toLowerCase() === "other" && String(reservation.eventTypeOtherDetails || "").trim()
+                ? `Other - ${String(reservation.eventTypeOtherDetails || "").trim()}`
+                : (reservation.eventType || "Event");
+            if (summary) {
+                summary.innerHTML = `
+                    <div><span class="font-bold">Event:</span> ${escapeHtml(eventLabel)}</div>
+                    <div><span class="font-bold">Package:</span> ${escapeHtml(packageMeta.packageName)}</div>
+                    <div><span class="font-bold">Inclusions:</span> ${escapeHtml(packageMeta.inclusions)}</div>
+                    <div><span class="font-bold">Total Amount:</span> ${finalPrice > 0 ? escapeHtml(formatPHP(finalPrice)) : "Unavailable"}</div>
+                `;
+            }
+            renderQuoteBreakdown(reservation);
+        }
+
+        function renderQuoteBreakdown(reservation) {
+            const wrapper = document.getElementById("quote-breakdown");
+            const lines = document.getElementById("quote-breakdown-lines");
+            if (!wrapper || !lines || !reservation) return;
+
+            const packageMeta = getPackageMetaFromReservation(reservation);
+            const hasBasePrice = reservation.basePrice !== null && reservation.basePrice !== undefined && Number.isFinite(Number(reservation.basePrice));
+            const hasDiscount = reservation.discount !== null && reservation.discount !== undefined && Number.isFinite(Number(reservation.discount));
+            const hasFinalPrice = reservation.finalPrice !== null && reservation.finalPrice !== undefined && Number.isFinite(Number(reservation.finalPrice));
+            const hasAdjustments = Array.isArray(reservation.customAdjustments) && reservation.customAdjustments.length > 0;
+            const hasPricing = hasBasePrice || hasAdjustments || hasDiscount || hasFinalPrice;
+
+            if (!hasPricing) {
+                if (packageMeta.price > 0) {
+                    lines.innerHTML = `
+                        <div class="flex justify-between"><span>Package Price</span><span class="font-semibold">${formatPHP(packageMeta.price)}</span></div>
+                        <div class="border-t border-slate-200 mt-1 pt-2 flex justify-between text-slate-900"><span class="font-black">Total</span><span class="font-black">${formatPHP(packageMeta.price)}</span></div>
+                    `;
+                    wrapper.classList.remove("hidden");
+                    return;
+                }
+                wrapper.classList.add("hidden");
+                lines.innerHTML = "";
+                return;
+            }
+
+            const base = Number(reservation.basePrice || 0);
+            const discount = Number(reservation.discount || 0);
+            const adjustments = Array.isArray(reservation.customAdjustments) ? reservation.customAdjustments : [];
+            const finalPrice = Number(reservation.finalPrice || 0);
+            const fallbackBasePrice = !adjustments.length && discount <= 0 && base <= 0 && packageMeta.price > 0
+                ? Number(packageMeta.price)
+                : base;
+            const resolvedTotal = finalPrice > 0 ? finalPrice : Number(packageMeta.price || 0);
+
+            const adjustmentRows = adjustments.length
+                ? adjustments.map((item) => {
+                    const label = String(item?.label || "Adjustment");
+                    const amount = Number(item?.amount || 0);
+                    return `<div class="flex justify-between"><span>${label}</span><span class="font-semibold">${amount >= 0 ? "+" : "-"}${formatPHP(Math.abs(amount))}</span></div>`;
+                }).join("")
+                : `<div class="flex justify-between text-slate-500"><span>Adjustments</span><span>None</span></div>`;
+
+            lines.innerHTML = `
+                <div class="flex justify-between"><span>Base Price</span><span class="font-semibold">${formatPHP(fallbackBasePrice)}</span></div>
+                ${adjustmentRows}
+                <div class="flex justify-between"><span>Discount</span><span class="font-semibold text-emerald-700">-${formatPHP(Math.max(discount, 0))}</span></div>
+                <div class="border-t border-slate-200 mt-1 pt-2 flex justify-between text-slate-900"><span class="font-black">Total</span><span class="font-black">${resolvedTotal > 0 ? formatPHP(resolvedTotal) : "Unavailable"}</span></div>
+            `;
+            wrapper.classList.remove("hidden");
+        }
+
+        async function renderReceiptMode() {
+            const receiptCard = document.getElementById("receipt-card");
+            const selectionScreen = document.getElementById("selection-screen");
+            const qrScreen = document.getElementById("qr-screen");
+            if (!receiptCard || !selectionScreen || !qrScreen) return;
+            if (paymentResult !== "success" || !reservationIdFromQuery) return;
+            try {
+                const response = await API.payments.byReservation(reservationIdFromQuery);
+                const payment = response?.payment;
+                const reservation = response?.reservation;
+                if (!payment || payment.status !== "verified") {
+                    showToast("Payment is still processing. Please refresh shortly.", "error");
+                    return;
+                }
+                applyPriceFromReservation(reservation);
+                latestReceiptSnapshot = { payment, reservation };
+                document.getElementById("receipt-content").innerHTML = `
+                    <div><span class="font-bold">Reservation ID:</span> #${reservation?._id || reservationIdFromQuery}</div>
+                    <div><span class="font-bold">Receipt No:</span> RCPT-${String(payment?._id || "").slice(-8).toUpperCase() || "N/A"}</div>
+                    <div><span class="font-bold">Client:</span> ${escapeHtml(reservation?.fullName || "-")}</div>
+                    <div><span class="font-bold">Package:</span> ${escapeHtml(getPackageMetaFromReservation(reservation).packageName)}</div>
+                    <div><span class="font-bold">Inclusions:</span> ${escapeHtml(getPackageMetaFromReservation(reservation).inclusions)}</div>
+                    <div><span class="font-bold">Method:</span> ${(payment.method || "").toUpperCase()}</div>
+                    <div><span class="font-bold">Amount:</span> ${formatPHP(payment.amount || reservation?.finalPrice || 0)}</div>
+                    <div><span class="font-bold">Paid At:</span> ${new Date(payment.paidAt || payment.updatedAt).toLocaleString("en-US")}</div>
+                    <div><span class="font-bold">Reference:</span> ${payment.providerReference || payment.providerCheckoutId || payment._id}</div>
+                    <div><span class="font-bold">Issued By:</span> SnapQueue Admin Portal</div>
+                    <div><span class="font-bold">Support:</span> otpaauthetication@gmail.com</div>
+                `;
+                selectionScreen.classList.add("hidden");
+                qrScreen.classList.add("hidden");
+                receiptCard.classList.remove("hidden");
+                if (pageParams.get("print") === "1") {
+                    setTimeout(() => window.print(), 350);
+                }
+            } catch (error) {
+                showToast(error?.message || "Unable to load receipt.", "error");
+            }
+        }
+
+        // INTEGRATION LOGIC: Load quote-based reservation price
+        window.addEventListener('DOMContentLoaded', async () => {
+            if (window.API?.ensureSession) {
+                const session = await API.ensureSession({ redirectTo: "login.html?redirect=reservation" });
+                if (!session?.ok) return;
+            }
+            try {
+                const reservation = await loadReservationForPayment();
+                if (reservation) {
+                    applyPriceFromReservation(reservation);
+                }
+            } catch (_error) {
+                // fallback to display defaults
+            }
+            await renderReceiptMode();
+        });
+
+        function showQR(method) {
+            selectedMethod = method.toLowerCase();
+            document.getElementById('selection-screen').classList.add('hidden');
+            document.getElementById('qr-screen').classList.remove('hidden');
+            document.getElementById('method-title').innerText = `Pay via ${method}`;
+            renderPaymentQr(selectedMethod);
+            lucide.createIcons();
+        }
+
+        function goBack() {
+            document.getElementById('qr-screen').classList.add('hidden');
+            document.getElementById('selection-screen').classList.remove('hidden');
+        }
+
+        function handleFile(input) {
+            const file = input?.files?.[0];
+            if (!file) return;
+            if (!file.type.startsWith("image/")) {
+                showToast("Please upload an image file only.", "error");
+                input.value = "";
+                return;
+            }
+            if (file.size > 5 * 1024 * 1024) {
+                showToast("Image is too large. Max 5MB.", "error");
+                input.value = "";
+                return;
+            }
+            document.getElementById("file-name").innerText = `Attached: ${file.name}`;
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                uploadedProofDataUrl = String(event?.target?.result || "");
+            };
+            reader.readAsDataURL(file);
+        }
+
+        async function processPayment() {
+            const btn = document.getElementById('submit-btn');
+            btn.innerText = "Submitting...";
+            btn.disabled = true;
+
+            try {
+                if (!latestReservation?._id) {
+                    throw new Error("No payable reservation found.");
+                }
+                if (["rejected", "completed"].includes(String(latestReservation.status || "").toLowerCase())) {
+                    throw new Error("Payment is not allowed for this reservation status.");
+                }
+                const packageMeta = getPackageMetaFromReservation(latestReservation);
+                const payableAmount = Number(packageMeta.price || 0);
+                if (!Number.isFinite(payableAmount) || payableAmount <= 0) {
+                    throw new Error("No valid total amount found. Please refresh or contact admin.");
+                }
+                if (!selectedMethod) {
+                    throw new Error("Please choose a payment method first.");
+                }
+                const referenceNumber = String(document.getElementById("reference-number")?.value || "").trim();
+                if (!referenceNumber) {
+                    throw new Error("Reference number is required.");
+                }
+                if (!uploadedProofDataUrl) {
+                    throw new Error("Please upload payment proof.");
+                }
+
+                const payload = {
+                    reservationId: latestReservation._id,
+                    method: selectedMethod,
+                    amount: payableAmount,
+                    referenceNumber,
+                    proofUrl: uploadedProofDataUrl
+                };
+
+                if (!window.API?.payments?.create) {
+                    throw new Error("Payment API is unavailable. Please refresh and try again.");
+                }
+                const response = await API.payments.create(payload);
+
+                if (!response?.success) {
+                    throw new Error("Failed to submit payment.");
+                }
+                showToast("Payment proof submitted. Waiting for admin verification.", "success");
+                setTimeout(() => {
+                    window.location.href = "dashboard.html";
+                }, 900);
+            } catch (error) {
+                showToast(error.message || "Failed to submit payment", "error");
+                btn.innerText = "Submit Payment Proof";
+                btn.disabled = false;
+            }
+        }
+
+        function printReceipt() {
+            window.print();
+        }
+
+        function saveReceiptAsImage() {
+            if (!latestReceiptSnapshot?.payment || !latestReceiptSnapshot?.reservation) {
+                showToast("No receipt data to save yet.", "error");
+                return;
+            }
+            const { payment, reservation } = latestReceiptSnapshot;
+            const packageMeta = getPackageMetaFromReservation(reservation);
+            const canvas = document.createElement("canvas");
+            canvas.width = 1200;
+            canvas.height = 1600;
+            const ctx = canvas.getContext("2d");
+            if (!ctx) {
+                showToast("Unable to create receipt image.", "error");
+                return;
+            }
+
+            ctx.fillStyle = "#ffffff";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            const drawBody = () => {
+                ctx.fillStyle = "#0f172a";
+                ctx.font = "bold 44px Arial";
+                ctx.fillText("SnapQueue Official Receipt", 80, 120);
+                ctx.fillStyle = "#64748b";
+                ctx.font = "bold 20px Arial";
+                ctx.fillText("Payment Verified", 80, 158);
+
+                const lines = [
+                    `Receipt No: RCPT-${String(payment?._id || "").slice(-8).toUpperCase() || "N/A"}`,
+                    `Reservation ID: #${reservation?._id || reservationIdFromQuery || "N/A"}`,
+                    `Client: ${reservation?.fullName || "-"}`,
+                    `Package: ${packageMeta.packageName}`,
+                    `Inclusions: ${packageMeta.inclusions}`,
+                    `Method: ${(payment.method || "").toUpperCase()}`,
+                    `Amount: ${formatPHP(payment.amount || reservation?.finalPrice || 0)}`,
+                    `Paid At: ${new Date(payment.paidAt || payment.updatedAt).toLocaleString("en-US")}`,
+                    `Reference: ${payment.providerReference || payment.providerCheckoutId || payment._id || "-"}`,
+                    "Issued By: SnapQueue Admin Portal",
+                    "Support: otpaauthetication@gmail.com"
+                ];
+
+                let y = 260;
+                ctx.fillStyle = "#1f2937";
+                ctx.font = "600 28px Arial";
+                lines.forEach((line) => {
+                    ctx.fillText(line, 80, y);
+                    y += 74;
+                });
+
+                ctx.fillStyle = "#94a3b8";
+                ctx.font = "bold 20px Arial";
+                ctx.fillText("This receipt is system-generated and valid for internal payment confirmation.", 80, 1460);
+
+                const link = document.createElement("a");
+                link.href = canvas.toDataURL("image/png");
+                const rid = String(reservation?._id || "receipt").slice(-8);
+                link.download = `snapqueue-receipt-${rid}.png`;
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+                showToast("Receipt image downloaded.", "success");
+            };
+
+            const logo = new Image();
+            logo.onload = () => {
+                ctx.drawImage(logo, 980, 70, 130, 130);
+                drawBody();
+            };
+            logo.onerror = drawBody;
+            logo.src = "bien-removebg.png";
+        }
+    </script>
+    <script src="chat-widget.js"></script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+

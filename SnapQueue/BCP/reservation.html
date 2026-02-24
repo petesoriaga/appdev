@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <link rel="icon" type="image/png" href="/favicon.png?v=2">
+  <link rel="icon" href="/favicon.ico?v=2" type="image/x-icon">
+  <link rel="shortcut icon" href="/favicon.ico?v=2" type="image/x-icon">
+  <title>Reservation | SnapQueue</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+    body { font-family: 'Plus Jakarta Sans', sans-serif; }
+    /* Custom scrollbar */
+    .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #3b82f6; border-radius: 10px; }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #2563eb; }
+
+    /* Map height adjustment */
+    #map {
+        height: 200px;
+        width: 100%;
+        border-radius: 0.5rem;
+    }
+
+    /* Select disabled state */
+    select:disabled {
+        background-color: #f3f4f6;
+        cursor: not-allowed;
+    }
+
+    /* Validation colors aligned with contact form */
+    .field-invalid { border-color: #ef4444 !important; background-color: #fef2f2 !important; }
+    .field-valid { border-color: #10b981 !important; background-color: #ecfdf5 !important; }
+  </style>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100 text-slate-800">
+
+  <div class="pointer-events-none fixed inset-0 overflow-hidden -z-10">
+    <div class="absolute -top-24 -right-20 w-96 h-96 rounded-full bg-blue-300/25 blur-3xl"></div>
+    <div class="absolute top-1/3 -left-20 w-80 h-80 rounded-full bg-cyan-200/25 blur-3xl"></div>
+    <div class="absolute -bottom-24 right-1/4 w-80 h-80 rounded-full bg-indigo-200/25 blur-3xl"></div>
+  </div>
+
+  <!-- Mobile Header -->
+  <header class="border-b border-slate-200/80 bg-white/85 backdrop-blur-xl sticky top-0 z-40 safe-top">
+    <div class="flex items-center justify-between px-4 sm:px-6 md:px-8 py-4 sm:py-5 md:py-6">
+      <a href="/" onclick="handleReservationBack(event)" class="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-slate-200 bg-white text-slate-700 text-sm font-bold hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200 transition-all">
+        <i data-lucide="chevron-left" class="w-4 h-4 flex-shrink-0"></i>
+        <span id="reservation-back-label">Back to Home</span>
+      </a>
+      <div class="text-right flex-1 ml-3 sm:ml-4">
+        <h1 class="text-lg sm:text-xl font-black tracking-tight text-slate-900 leading-tight">Book Your Session</h1>
+        <p class="text-xs sm:text-sm text-slate-500 mt-0.5 sm:mt-1">Fill out the form to request your session</p>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <section class="py-8 sm:py-10 md:py-16 px-4 sm:px-6 md:px-8">
+    <div class="mx-auto max-w-3xl">
+      <div class="mb-4 sm:mb-6">
+        <p class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 border border-blue-100 text-[10px] font-extrabold uppercase tracking-widest text-blue-700">Reservation Form</p>
+      </div>
+      <form id="reservationForm" class="space-y-5 sm:space-y-6 md:space-y-8" novalidate>
+        
+        <!-- Personal Information Section -->
+        <div class="bg-white/95 backdrop-blur-sm p-5 sm:p-6 md:p-8 rounded-3xl shadow-xl shadow-slate-200/60 border border-slate-200">
+          <h3 class="text-lg sm:text-xl font-bold mb-5 sm:mb-6 flex items-center gap-3 touch-none text-gray-900">
+            <i data-lucide="user" class="h-6 w-6 text-blue-500 flex-shrink-0"></i>
+            <span>Personal Information</span>
+          </h3>
+          <div class="space-y-4 sm:space-y-5">
+            <!-- Full Name -->
+            <div>
+              <label for="fullName" class="block text-xs sm:text-sm font-semibold mb-2 text-gray-700">Full Name</label>
+              <input type="text" name="fullName" id="fullName" placeholder="e.g. Pete Soriaga" inputmode="text" class="w-full px-4 sm:px-5 py-3 sm:py-3.5 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-base sm:text-sm touch-manipulation hover:border-gray-300" required>
+            </div>
+            
+            <!-- Email & Phone (Stack on mobile, Grid on desktop) -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
+              <div>
+                <label for="res-email" class="block text-xs sm:text-sm font-semibold mb-2 text-gray-700">Email (@gmail.com)</label>
+                <input type="email" name="email" id="res-email" placeholder="example@gmail.com" inputmode="email" class="w-full px-4 sm:px-5 py-3 sm:py-3.5 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-base sm:text-sm touch-manipulation hover:border-gray-300" required>
+              </div>
+              <div>
+                <label for="res-phone" class="block text-xs sm:text-sm font-semibold mb-2 text-gray-700">Phone</label>
+                <input type="tel" name="phone" id="res-phone" placeholder="09XX XXX XXXX" inputmode="tel" class="w-full px-4 sm:px-5 py-3 sm:py-3.5 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-base sm:text-sm touch-manipulation hover:border-gray-300" required>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Venue Location Section -->
+        <div class="bg-white/95 backdrop-blur-sm p-5 sm:p-6 md:p-8 rounded-3xl shadow-xl shadow-slate-200/60 border border-slate-200">
+          <h3 class="text-lg sm:text-xl font-bold mb-5 sm:mb-6 flex items-center gap-3 touch-none text-gray-900">
+            <i data-lucide="map-pin" class="h-6 w-6 text-blue-500 flex-shrink-0"></i>
+            <span>Venue Location</span>
+          </h3>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
+            <!-- Province -->
+            <div>
+              <label for="province" class="block text-xs sm:text-sm font-semibold mb-2 text-gray-700">Province</label>
+              <select id="province" name="province" class="w-full px-4 sm:px-5 py-3 sm:py-3.5 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-base sm:text-sm bg-white touch-manipulation hover:border-gray-300" required title="Select your province">
+                <option value="">Loading Provinces...</option>
+              </select>
+            </div>
+            <!-- City -->
+            <div>
+              <label for="city" class="block text-xs sm:text-sm font-semibold mb-2 text-gray-700">City / Municipality</label>
+              <select id="city" name="city" class="w-full px-4 sm:px-5 py-3 sm:py-3.5 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-base sm:text-sm bg-white touch-manipulation hover:border-gray-300 disabled:bg-gray-50 disabled:cursor-not-allowed" disabled required title="Select your city or municipality">
+                <option value="">Select Province first</option>
+              </select>
+            </div>
+            <!-- Barangay -->
+            <div>
+              <label for="barangay" class="block text-xs sm:text-sm font-semibold mb-2 text-gray-700">Barangay</label>
+              <select id="barangay" name="barangay" class="w-full px-4 sm:px-5 py-3 sm:py-3.5 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-base sm:text-sm bg-white touch-manipulation hover:border-gray-300 disabled:bg-gray-50 disabled:cursor-not-allowed" disabled required title="Select your barangay">
+                <option value="">Select City first</option>
+              </select>
+            </div>
+            <!-- Street -->
+            <div>
+              <label for="street" class="block text-xs sm:text-sm font-semibold mb-2 text-gray-700">Street / Building No.</label>
+              <input type="text" id="street" name="street" placeholder="House No., Street name" inputmode="text" class="w-full px-4 sm:px-5 py-3 sm:py-3.5 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-base sm:text-sm touch-manipulation hover:border-gray-300" required>
+            </div>
+          </div>
+          <input type="hidden" name="latitude" id="lat" value="">
+          <input type="hidden" name="longitude" id="lng" value="">
+        </div>
+
+        <!-- Event Details Section -->
+        <div class="bg-white/95 backdrop-blur-sm p-5 sm:p-6 md:p-8 rounded-3xl shadow-xl shadow-slate-200/60 border border-slate-200">
+          <h3 class="text-lg sm:text-xl font-bold mb-5 sm:mb-6 flex items-center gap-3 touch-none text-gray-900">
+            <i data-lucide="calendar" class="h-6 w-6 text-blue-500 flex-shrink-0"></i>
+            <span>Event Details</span>
+          </h3>
+          <div class="space-y-4 sm:space-y-5">
+            <!-- Event Type -->
+            <div>
+              <label for="eventType" class="block text-xs sm:text-sm font-semibold mb-2 text-gray-700">Event Type</label>
+              <select name="eventType" id="eventType" class="w-full px-4 sm:px-5 py-3 sm:py-3.5 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-base sm:text-sm bg-white touch-manipulation hover:border-gray-300" required title="Select the type of event">
+                <option value="">Select an event type</option>
+                <option value="wedding">Wedding</option>
+                <option value="birthday">Birthday</option>
+                <option value="event">Event</option>
+                <option value="portrait">Portrait</option>
+                <option value="corporate">Corporate</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+            <div id="eventTypeOtherWrap" class="hidden">
+              <label for="eventTypeOtherDetails" class="block text-xs sm:text-sm font-semibold mb-2 text-gray-700">Specify Other Event</label>
+              <input type="text" id="eventTypeOtherDetails" name="eventTypeOtherDetails" placeholder="Describe your event type" inputmode="text" class="w-full px-4 sm:px-5 py-3 sm:py-3.5 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-base sm:text-sm touch-manipulation hover:border-gray-300">
+            </div>
+            <!-- Event Date & Time -->
+            <div>
+              <label for="eventDateTime" class="block text-xs sm:text-sm font-semibold mb-2 text-gray-700">Event Date & Time</label>
+              <input type="datetime-local" name="eventDateTime" id="eventDateTime" class="w-full px-4 sm:px-5 py-3 sm:py-3.5 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-base sm:text-sm bg-white touch-manipulation hover:border-gray-300" required title="Select the date and time of your event">
+              <p id="dateAvailabilityWarning" class="hidden mt-2 text-xs sm:text-sm font-semibold text-red-600">This date is already booked and approved. Please select another date.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Service & Package Section -->
+        <div class="bg-white/95 backdrop-blur-sm p-5 sm:p-6 md:p-8 rounded-3xl shadow-xl shadow-slate-200/60 border border-slate-200">
+          <h3 class="text-lg sm:text-xl font-bold mb-5 sm:mb-6 flex items-center gap-3 touch-none text-gray-900">
+            <i data-lucide="camera" class="h-6 w-6 text-blue-500 flex-shrink-0"></i>
+            <span>Package</span>
+          </h3>
+          <div class="space-y-4 sm:space-y-5">
+            <input type="hidden" id="service" name="service" value="">
+            <input type="hidden" id="serviceOtherDetails" name="serviceOtherDetails" value="">
+            <div>
+              <label class="block text-xs sm:text-sm font-semibold mb-3 text-gray-700">Select Package</label>
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <label class="package-card cursor-pointer border-2 border-gray-200 rounded-xl p-4 bg-white hover:border-blue-300 transition-all">
+                  <input type="radio" name="package" value="basic" class="hidden" onchange="selectPackageCard(this)">
+                  <p class="text-sm font-black text-slate-900">Basic</p>
+                  <p class="text-xs font-semibold text-slate-500 mt-1">Softcopy only</p>
+                  <p class="text-sm font-black text-blue-700 mt-2">PHP 2,700</p>
+                </label>
+                <label class="package-card cursor-pointer border-2 border-gray-200 rounded-xl p-4 bg-white hover:border-blue-300 transition-all">
+                  <input type="radio" name="package" value="standard" class="hidden" onchange="selectPackageCard(this)">
+                  <p class="text-sm font-black text-slate-900">Standard</p>
+                  <p class="text-xs font-semibold text-slate-500 mt-1">Softcopy + Hardcopy</p>
+                  <p class="text-sm font-black text-blue-700 mt-2">PHP 3,500</p>
+                </label>
+                <label class="package-card cursor-pointer border-2 border-gray-200 rounded-xl p-4 bg-white hover:border-blue-300 transition-all">
+                  <input type="radio" name="package" value="premium" class="hidden" onchange="selectPackageCard(this)">
+                  <p class="text-sm font-black text-slate-900">Premium</p>
+                  <p class="text-xs font-semibold text-slate-500 mt-1">Softcopy + Hardcopy + Video</p>
+                  <p class="text-sm font-black text-blue-700 mt-2">PHP 4,500</p>
+                </label>
+                <label class="package-card cursor-pointer border-2 border-gray-200 rounded-xl p-4 bg-white hover:border-blue-300 transition-all sm:col-span-3">
+                  <input type="radio" name="package" value="custom" class="hidden" onchange="selectPackageCard(this)">
+                  <p class="text-sm font-black text-slate-900">Custom Package</p>
+                  <p class="text-xs font-semibold text-slate-500 mt-1">Build your own package based on needs and budget</p>
+                </label>
+              </div>
+            </div>
+            <div id="customPackageWrap" class="hidden">
+              <label for="packageCustomDescription" class="block text-xs sm:text-sm font-semibold mb-2 text-gray-700">Custom Package Description</label>
+              <input type="text" id="packageCustomDescription" name="packageCustomDescription" placeholder="e.g. 6 hours coverage, 2 photographers, same-day teaser" inputmode="text" class="w-full px-4 sm:px-5 py-3 sm:py-3.5 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-base sm:text-sm touch-manipulation hover:border-gray-300">
+            </div>
+            <!-- Duration -->
+            <div>
+              <label for="duration" class="block text-xs sm:text-sm font-semibold mb-2 text-gray-700">Duration (hours)</label>
+              <input type="number" name="duration" id="duration" min="1" max="12" placeholder="e.g., 4" inputmode="numeric" class="w-full px-4 sm:px-5 py-3 sm:py-3.5 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-base sm:text-sm touch-manipulation hover:border-gray-300" required>
+            </div>
+          </div>
+        </div>
+
+        <!-- Additional Notes Section -->
+        <div class="bg-white/95 backdrop-blur-sm p-5 sm:p-6 md:p-8 rounded-3xl shadow-xl shadow-slate-200/60 border border-slate-200">
+          <h3 class="text-lg sm:text-xl font-bold mb-5 sm:mb-6 flex items-center gap-3 touch-none text-gray-900">
+            <i data-lucide="file-text" class="h-6 w-6 text-blue-500 flex-shrink-0"></i>
+            <span>Additional Notes (Optional)</span>
+          </h3>
+          <textarea name="additionalNotes" placeholder="Tell us about your vision..." rows="4" class="w-full px-4 sm:px-5 py-3 sm:py-3.5 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-base sm:text-sm resize-none touch-manipulation hover:border-gray-300"></textarea>
+        </div>
+
+        <!-- Terms & Conditions -->
+        <div class="bg-white/95 backdrop-blur-sm p-5 sm:p-6 md:p-8 rounded-3xl shadow-xl shadow-slate-200/60 border border-slate-200">
+          <label class="flex items-start gap-3 cursor-pointer touch-manipulation">
+            <input type="checkbox" id="termsCheckbox" name="terms" class="w-5 h-5 rounded-lg border-2 border-gray-200 accent-blue-600 mt-0.5 flex-shrink-0 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all" required>
+            <span class="text-xs sm:text-sm text-gray-600 leading-relaxed">I agree to the <a href="/terms" target="_blank" class="text-blue-600 font-semibold underline hover:text-blue-700 transition-colors">Terms & Conditions</a></span>
+          </label>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex flex-col sm:flex-row gap-3 sm:gap-4 pb-4">
+          <a href="/" onclick="handleReservationBack(event)" class="px-6 sm:px-8 py-3.5 sm:py-4 border-2 border-slate-300 bg-white rounded-xl hover:bg-slate-50 active:bg-slate-100 transition-all text-slate-700 font-bold text-center text-base sm:text-sm touch-manipulation flex-1">Cancel</a>
+          <button id="submitBtn" type="button" class="flex-1 px-6 sm:px-8 py-3.5 sm:py-4 bg-blue-600 text-white rounded-xl hover:bg-blue-700 active:bg-blue-800 transition-all font-bold text-base sm:text-sm shadow-xl shadow-blue-200 touch-manipulation">
+            Submit Reservation
+          </button>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <div id="pending-date-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[120] items-center justify-center p-4">
+    <div class="w-full max-w-md bg-white rounded-3xl shadow-2xl border border-slate-200 p-6 sm:p-7">
+      <div class="w-14 h-14 mx-auto mb-4 rounded-full bg-amber-50 flex items-center justify-center">
+        <i data-lucide="calendar-clock" class="w-7 h-7 text-amber-600"></i>
+      </div>
+      <h3 class="text-lg font-black text-slate-900 text-center mb-2">Date Already Pending</h3>
+      <p class="text-sm text-slate-600 text-center leading-relaxed mb-6">
+        This date is already reserved by another client and is currently pending approval. Would you like to continue with your reservation?
+      </p>
+      <div class="flex gap-3">
+        <button type="button" onclick="resolvePendingDateModal(false)" class="flex-1 px-4 py-3 bg-slate-100 text-slate-700 text-xs font-black uppercase rounded-xl hover:bg-slate-200 transition-colors">Cancel</button>
+        <button type="button" onclick="resolvePendingDateModal(true)" class="flex-1 px-4 py-3 bg-blue-600 text-white text-xs font-black uppercase rounded-xl hover:bg-blue-700 transition-colors shadow-lg shadow-blue-100">Continue</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="api.js?v=20260230"></script>
+  <script>
+    // Initialize Lucide Icons
+    lucide.createIcons();
+
+    // Fix: Disable Past Dates and Times
+    const dateTimeInput = document.getElementById('eventDateTime');
+    const now = new Date();
+    // Format to YYYY-MM-DDTHH:MM (Local time)
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    dateTimeInput.min = `${year}-${month}-${day}T${hours}:${minutes}`;
+
+    // --- PHILIPPINES LOCATION SELECTOR LOGIC ---
+    const provinceSelect = document.getElementById('province');
+    const citySelect = document.getElementById('city');
+    const barangaySelect = document.getElementById('barangay');
+
+    async function loadProvinces() {
+      try {
+        const response = await fetch('https://psgc.gitlab.io/api/provinces/');
+        const provinces = await response.json();
+        provinceSelect.innerHTML = '<option value="">Select Province</option>';
+        provinces.sort((a, b) => a.name.localeCompare(b.name)).forEach(p => {
+          provinceSelect.innerHTML += `<option value="${p.code}" data-name="${p.name}">${p.name}</option>`;
+        });
+      } catch (error) {
+        console.error("Error loading provinces:", error);
+      }
+    }
+
+    provinceSelect.addEventListener('change', async (e) => {
+      const provinceCode = e.target.value;
+      citySelect.innerHTML = '<option value="">Loading Cities...</option>';
+      citySelect.disabled = true;
+      barangaySelect.innerHTML = '<option value="">Select City first</option>';
+      barangaySelect.disabled = true;
+
+      if (!provinceCode) return;
+
+      try {
+        const response = await fetch(`https://psgc.gitlab.io/api/provinces/${provinceCode}/cities-municipalities/`);
+        const cities = await response.json();
+        citySelect.innerHTML = '<option value="">Select City / Municipality</option>';
+        cities.sort((a, b) => a.name.localeCompare(b.name)).forEach(c => {
+          citySelect.innerHTML += `<option value="${c.code}" data-name="${c.name}">${c.name}</option>`;
+        });
+        citySelect.disabled = false;
+      } catch (error) {
+        console.error("Error loading cities:", error);
+      }
+    });
+
+    citySelect.addEventListener('change', async (e) => {
+      const cityCode = e.target.value;
+      barangaySelect.innerHTML = '<option value="">Loading Barangays...</option>';
+      barangaySelect.disabled = true;
+
+      if (!cityCode) return;
+
+      try {
+        const response = await fetch(`https://psgc.gitlab.io/api/cities-municipalities/${cityCode}/barangays/`);
+        const barangays = await response.json();
+        barangaySelect.innerHTML = '<option value="">Select Barangay</option>';
+        barangays.sort((a, b) => a.name.localeCompare(b.name)).forEach(b => {
+          barangaySelect.innerHTML += `<option value="${b.code}" data-name="${b.name}">${b.name}</option>`;
+        });
+        barangaySelect.disabled = false;
+      } catch (error) {
+        console.error("Error loading barangays:", error);
+      }
+    });
+
+    const form = document.getElementById('reservationForm');
+    const submitBtn = document.getElementById('submitBtn');
+    const eventTypeSelect = document.getElementById('eventType');
+    const serviceInput = document.getElementById('service');
+    const serviceOtherDetailsInput = document.getElementById('serviceOtherDetails');
+    const eventTypeOtherWrap = document.getElementById('eventTypeOtherWrap');
+    const eventTypeOtherDetailsInput = document.getElementById('eventTypeOtherDetails');
+    const customPackageWrap = document.getElementById('customPackageWrap');
+    const packageCustomDescriptionInput = document.getElementById('packageCustomDescription');
+    const dateAvailabilityWarning = document.getElementById('dateAvailabilityWarning');
+    let isSelectedDateAvailable = true;
+    let pendingDateModalResolver = null;
+    const invalidClasses = ['field-invalid', 'focus:ring-red-400'];
+    const validClasses = ['field-valid', 'focus:ring-emerald-400'];
+
+    let toastContainer = document.getElementById("contact-toast-container");
+    if (!toastContainer) {
+      toastContainer = document.createElement("div");
+      toastContainer.id = "contact-toast-container";
+      toastContainer.className = "fixed top-4 left-1/2 -translate-x-1/2 z-[120] flex flex-col items-center gap-2 pointer-events-none";
+      document.body.appendChild(toastContainer);
+    }
+
+    function showPopMessage(msg, type = 'error') {
+        const toast = document.createElement("div");
+        const isSuccess = type === "success";
+        toast.className = [
+          "pointer-events-auto",
+          "min-w-[250px]",
+          "max-w-[92vw]",
+          "px-4",
+          "py-3",
+          "rounded-xl",
+          "shadow-lg",
+          "text-sm",
+          "font-bold",
+          "text-white",
+          "translate-y-2",
+          "opacity-0",
+          "transition-all",
+          "duration-200",
+          isSuccess ? "bg-emerald-600" : "bg-red-600"
+        ].join(" ");
+        toast.textContent = msg;
+        toastContainer.appendChild(toast);
+        requestAnimationFrame(() => {
+          toast.classList.remove("translate-y-2", "opacity-0");
+        });
+        setTimeout(() => {
+          toast.classList.add("translate-y-2", "opacity-0");
+          setTimeout(() => toast.remove(), 220);
+        }, 2600);
+    }
+
+    function togglePendingDateModal(show) {
+      const modal = document.getElementById("pending-date-modal");
+      if (!modal) return;
+      if (show) {
+        modal.classList.remove("hidden");
+        modal.classList.add("flex");
+      } else {
+        modal.classList.add("hidden");
+        modal.classList.remove("flex");
+      }
+    }
+
+    function resolvePendingDateModal(shouldContinue) {
+      const resolver = pendingDateModalResolver;
+      pendingDateModalResolver = null;
+      togglePendingDateModal(false);
+      if (typeof resolver === "function") {
+        resolver(Boolean(shouldContinue));
+      }
+    }
+
+    function askPendingDateConfirmation() {
+      return new Promise((resolve) => {
+        pendingDateModalResolver = resolve;
+        togglePendingDateModal(true);
+      });
+    }
+
+    // Helper function to manage validation classes
+    function setValidationUI(element, status) {
+        element.classList.remove(...invalidClasses, ...validClasses);
+        if (status === 'valid') {
+            element.classList.add(...validClasses);
+            return;
+        }
+        if (status === 'invalid' || status === 'warning') {
+            element.classList.add(...invalidClasses);
+        }
+    }
+
+    function selectPackageCard(input) {
+        const cards = document.querySelectorAll('.package-card');
+        cards.forEach((card) => {
+            card.classList.remove('border-blue-500', 'bg-blue-50');
+            card.classList.add('border-gray-200', 'bg-white');
+        });
+        const selectedCard = input.closest('.package-card');
+        if (selectedCard) {
+            selectedCard.classList.remove('border-gray-200', 'bg-white');
+            selectedCard.classList.add('border-blue-500', 'bg-blue-50');
+        }
+        serviceInput.value = String(input?.value || '').toLowerCase();
+        const isCustom = String(input?.value || '').toLowerCase() === 'custom';
+        customPackageWrap.classList.toggle('hidden', !isCustom);
+        packageCustomDescriptionInput.required = isCustom;
+        if (!isCustom) {
+            packageCustomDescriptionInput.value = '';
+            setValidationUI(packageCustomDescriptionInput, 'valid');
+        }
+        setValidationUI(input, input?.checked ? 'valid' : 'warning');
+    }
+
+    function toggleEventTypeOtherInput() {
+        const isOther = (eventTypeSelect.value || '').toLowerCase() === 'other';
+        eventTypeOtherWrap.classList.toggle('hidden', !isOther);
+        eventTypeOtherDetailsInput.required = isOther;
+        if (!isOther) {
+            eventTypeOtherDetailsInput.value = '';
+            setValidationUI(eventTypeOtherDetailsInput, 'valid');
+        }
+    }
+
+    eventTypeSelect.addEventListener('change', toggleEventTypeOtherInput);
+
+    async function checkSelectedDateAvailability() {
+        const value = dateTimeInput.value;
+        isSelectedDateAvailable = true;
+        dateAvailabilityWarning.classList.add('hidden');
+        if (!value || !window.API?.reservations?.checkAvailability) {
+            return true;
+        }
+        try {
+            const response = await API.reservations.checkAvailability(value);
+            isSelectedDateAvailable = Boolean(response?.available);
+            if (!isSelectedDateAvailable) {
+                dateAvailabilityWarning.classList.remove('hidden');
+                setValidationUI(dateTimeInput, 'invalid');
+            }
+            return isSelectedDateAvailable;
+        } catch (_error) {
+            // If availability check fails, keep submission path deterministic and block.
+            isSelectedDateAvailable = false;
+            dateAvailabilityWarning.classList.remove('hidden');
+            setValidationUI(dateTimeInput, 'invalid');
+            return false;
+        }
+    }
+
+    dateTimeInput.addEventListener('change', checkSelectedDateAvailability);
+
+    submitBtn.addEventListener('click', async () => {
+        const fullName = document.getElementById('fullName');
+        const email = document.getElementById('res-email');
+        const phone = document.getElementById('res-phone');
+        const street = document.getElementById('street');
+        const eventDateTime = document.getElementById('eventDateTime');
+        const eventType = document.getElementById('eventType');
+        const eventTypeOtherDetails = document.getElementById('eventTypeOtherDetails');
+        const packageSelect = document.querySelector('input[name="package"]:checked');
+        const packageCustomDescription = document.getElementById('packageCustomDescription').value.trim();
+        const duration = document.getElementById('duration');
+        const terms = document.getElementById('termsCheckbox');
+
+        const isNameValid = fullName.value.trim().length > 1;
+        const isEmailValid = /^[A-Za-z0-9._%+-]+@gmail\.com$/i.test(email.value.trim());
+        const isPhoneValid = phone.value.trim().length >= 7;
+        const isDateValid = eventDateTime.value && new Date(eventDateTime.value) >= new Date();
+        const isDurationValid = Number(duration.value) > 0 && Number(duration.value) <= 12;
+
+        // Validate Individual Fields for Colors
+        setValidationUI(fullName, isNameValid ? 'valid' : 'invalid');
+        setValidationUI(email, isEmailValid ? 'valid' : 'invalid');
+        setValidationUI(phone, isPhoneValid ? 'valid' : 'invalid');
+        setValidationUI(provinceSelect, provinceSelect.value ? 'valid' : 'warning');
+        setValidationUI(citySelect, citySelect.value ? 'valid' : 'warning');
+        setValidationUI(barangaySelect, barangaySelect.value ? 'valid' : 'warning');
+        setValidationUI(street, street.value.trim() ? 'valid' : 'invalid');
+        setValidationUI(eventType, eventType.value ? 'valid' : 'warning');
+        setValidationUI(eventDateTime, isDateValid ? 'valid' : 'invalid');
+        setValidationUI(duration, isDurationValid ? 'valid' : 'invalid');
+        if ((eventType.value || '').toLowerCase() === 'other') {
+            setValidationUI(eventTypeOtherDetailsInput, eventTypeOtherDetailsInput.value.trim() ? 'valid' : 'warning');
+        }
+        if ((packageSelect?.value || '').toLowerCase() === 'custom') {
+            setValidationUI(packageCustomDescriptionInput, packageCustomDescription ? 'valid' : 'warning');
+        }
+
+        if (!isNameValid) {
+            showPopMessage("Please enter your full name", 'error');
+            return;
+        }
+
+        if (!isEmailValid) {
+            showPopMessage("You must use a valid @gmail.com address", 'error');
+            return;
+        }
+        if (!isPhoneValid) {
+            showPopMessage("Please enter a valid phone number", 'error');
+            return;
+        }
+        if (!isDateValid) {
+            showPopMessage("Please select a valid future date and time", 'error');
+            return;
+        }
+        if (!provinceSelect.value || !citySelect.value || !barangaySelect.value || !street.value.trim()) {
+            showPopMessage("Please complete the address fields", 'warning');
+            return;
+        }
+        if (!eventType.value) {
+            showPopMessage("Please select an event type", 'warning');
+            return;
+        }
+        if ((eventType.value || '').toLowerCase() === 'other' && !eventTypeOtherDetails.value.trim()) {
+            showPopMessage("Please specify the other event type", 'warning');
+            return;
+        }
+        if (!packageSelect?.value) {
+            showPopMessage("Please select a package", 'warning');
+            return;
+        }
+        if ((packageSelect.value || '').toLowerCase() === 'custom' && !packageCustomDescription) {
+            showPopMessage("Please describe your custom package", 'warning');
+            return;
+        }
+        if (!isDurationValid) {
+            showPopMessage("Duration must be between 1 and 12 hours", 'error');
+            return;
+        }
+        if (!terms.checked) {
+            showPopMessage("You must agree to the terms", 'error');
+            return;
+        }
+
+        const available = await checkSelectedDateAvailability();
+        if (!available) {
+            showPopMessage("This date is already booked and approved. Please select another date.", 'error');
+            return;
+        }
+
+        const payload = {
+            fullName: fullName.value.trim(),
+            email: email.value.toLowerCase().trim(),
+            phone: phone.value.trim(),
+            province: provinceSelect.options[provinceSelect.selectedIndex].text,
+            city: citySelect.options[citySelect.selectedIndex].text,
+            barangay: barangaySelect.options[barangaySelect.selectedIndex].text,
+            street: street.value.trim(),
+            eventType: eventType.value,
+            eventTypeOtherDetails: eventTypeOtherDetails.value.trim(),
+            eventDateTime: eventDateTime.value,
+            service: packageSelect.value,
+            serviceOtherDetails: serviceOtherDetailsInput.value.trim(),
+            packageName: packageSelect.value,
+            packageCustomDescription,
+            durationHours: Number(duration.value),
+            additionalNotes: document.querySelector('textarea[name="additionalNotes"]').value,
+            latitude: document.getElementById('lat').value,
+            longitude: document.getElementById('lng').value
+        };
+
+        const completeReservationSuccess = (created) => {
+            if (created) {
+                localStorage.setItem('latestReservation', JSON.stringify(created));
+
+                const userReservations = JSON.parse(localStorage.getItem('userReservations') || '[]');
+                userReservations.unshift(created);
+                localStorage.setItem('userReservations', JSON.stringify(userReservations));
+
+                const allReservations = JSON.parse(localStorage.getItem('allReservations') || '[]');
+                allReservations.unshift(created);
+                localStorage.setItem('allReservations', JSON.stringify(allReservations));
+            }
+
+            localStorage.setItem('tempReservation', JSON.stringify(payload));
+            const isCustomPackage = String(packageSelect.value || '').toLowerCase() === 'custom';
+            if (isCustomPackage) {
+                showPopMessage("Custom package submitted. Please wait for admin approval before payment.", 'success');
+                setTimeout(() => {
+                    window.location.href = 'dashboard.html?notice=custom_pending_approval';
+                }, 1200);
+                return;
+            }
+            showPopMessage("Reservation submitted successfully!", 'success');
+            setTimeout(() => {
+                const reservationId = created?._id ? `?reservationId=${encodeURIComponent(created._id)}&from=dashboard` : "";
+                window.location.href = `payment.html${reservationId}`;
+            }, 1000);
+        };
+
+        try {
+            if (window.API?.reservations?.create) {
+                const response = await API.reservations.create(payload);
+                completeReservationSuccess(response?.reservation || null);
+                return;
+            }
+
+            localStorage.setItem('tempReservation', JSON.stringify(payload));
+            showPopMessage("Reservation saved locally.", 'warning');
+            setTimeout(() => { window.location.href = 'payment.html'; }, 1000);
+        } catch (error) {
+            const errorCode = error?.data?.code;
+            if (errorCode === "DATE_PENDING_CONFIRMATION_REQUIRED") {
+                const shouldContinue = await askPendingDateConfirmation();
+                if (!shouldContinue) {
+                    showPopMessage("Reservation cancelled. Please select another date.", 'warning');
+                    return;
+                }
+                try {
+                    const response = await API.reservations.create({
+                        ...payload,
+                        allowPendingConflict: true
+                    });
+                    completeReservationSuccess(response?.reservation || null);
+                    return;
+                } catch (retryError) {
+                    showPopMessage(retryError.message || "Failed to submit reservation", 'error');
+                    return;
+                }
+            }
+            showPopMessage(error.message || "Failed to submit reservation", 'error');
+        }
+    });
+
+    const reservationParams = new URLSearchParams(window.location.search);
+    const reservationFrom = reservationParams.get("from") || "home";
+
+    function getReservationBackTarget(role) {
+      if (reservationFrom === "dashboard") {
+        return role === "admin" ? "admin_dashboard.html" : "dashboard.html";
+      }
+      return "index.html";
+    }
+
+    window.onload = async () => {
+        const backLabel = document.getElementById("reservation-back-label");
+        if (backLabel) {
+          backLabel.textContent = reservationFrom === "dashboard" ? "Back to Dashboard" : "Back to Home";
+        }
+        if (window.API?.ensureSession) {
+            const redirectTo = `login.html?redirect=reservation&from=${encodeURIComponent(reservationFrom)}`;
+            const session = await API.ensureSession({ redirectTo });
+            if (!session?.ok) return;
+        }
+        loadProvinces();
+        toggleEventTypeOtherInput();
+    };
+
+    async function handleReservationBack(event) {
+      event.preventDefault();
+      if (reservationFrom !== "dashboard") {
+        window.location.href = "index.html";
+        return;
+      }
+      if (!window.API?.getToken || !API.getToken()) {
+        window.location.href = "dashboard.html";
+        return;
+      }
+      try {
+        const response = await API.auth.me();
+        if (response?.success) {
+          window.location.href = getReservationBackTarget(response?.user?.role);
+          return;
+        }
+      } catch (_error) {
+        // fall back to dashboard when launched from dashboard
+      }
+      window.location.href = "dashboard.html";
+    }
+  </script>
+  <script src="chat-widget.js"></script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
